@@ -34,12 +34,12 @@ start:
  
  
            cli
-        mov ax,cs               ; Setup segment registers
-        mov ds,ax               ; Make DS correct
-        mov es,ax               ; Make ES correct
-        mov ss,ax               ; Make SS correct        
+        mov ax,cs              
+        mov ds,ax             
+        mov es,ax              
+        mov ss,ax                 
         mov bp,7c00h
-        mov sp,7c00h            ; Setup a stack
+        mov sp,7c00h            
         sti
 
 
@@ -48,21 +48,21 @@ start:
 	mov [disknum],al						
 			
 
- mov   ax, 0x100         ; сегмент куда пишем
+ mov   ax, 0x100        
     mov   es, ax
-    mov	  bx, 0; адрес куда пишем
-    mov   ch, 0; дорожка 0
-    mov   cl, 2   ; начиная с сектора 2
-	;mov   dl, 0x80; номер диска
-    mov   dh, 0; номер головки
+    mov	  bx, 0
+    mov   ch, 0
+    mov   cl, 2   
+	;mov   dl, 0x80
+    mov   dh, 0
 call load
- mov   ax, 0x1e0         ; сегмент куда пишем
+ mov   ax, 0x1e0         
     mov   es, ax
-    mov	  bx, 0; адрес куда пишем
-    mov   ch, 0; дорожка 0
-    mov   cl, 9   ; начиная с сектора 2
-	;mov   dl, 0x80; номер диска
-    mov   dh, 0; номер головки
+    mov	  bx, 0
+    mov   ch, 0
+    mov   cl, 9  
+	;mov   dl, 0x80
+    mov   dh, 0
 call load
    
     
@@ -70,9 +70,9 @@ call load
     pop   es
     
      mov al, '>'
-    mov ah, 0x0E; номер функции BIOS
-    mov bh, 0; страница видеопамяти
-    int 0x10; выводим символ
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
 	
 
 	
@@ -80,15 +80,15 @@ call load
     jmp 0x100:0
 	
    mov al, '<'
-    mov ah, 0x0E; номер функции BIOS
-    mov bh, 0; страница видеопамяти
-    int 0x10; выводим символ
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
 	jmp$
    
 load:
 
-    mov   ah, 2; номер функции
-    mov   al, 7;хз почему 7,если больше, не рабоатет.в сумме больше чем один цилиндр,наверно
+    mov   ah, 2
+    mov   al, 7
     int   0x13
 			
 	
@@ -97,28 +97,28 @@ load:
     mov al, 8h	
 	add al,48
 
-    mov ah, 0x0E; номер функции BIOS
-    mov bh, 0; страница видеопамяти
-    int 0x10; выводим символ
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
 
 	 mov al, ah	
 	add al,48
 
-    mov ah, 0x0E; номер функции BIOS
-    mov bh, 0; страница видеопамяти
-    int 0x10; выводим символ
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
 	 mov al, ah	
 	add al,49
 
-    mov ah, 0x0E; номер функции BIOS
-    mov bh, 0; страница видеопамяти
-    int 0x10; выводим символ
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
 		
 	mov al,'('
 
-    mov ah, 0x0E; номер функции BIOS
-    mov bh, 0; страница видеопамяти
-    int 0x10; выводим символ
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
 	
 	
 	
@@ -128,29 +128,29 @@ load:
 			 mov al, ah	
 
 
-    mov ah, 0x0E; номер функции BIOS
-    mov bh, 0; страница видеопамяти
-    int 0x10; выводим символ	mov ah,00h
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
 			int 16h
 			 mov al, ah	
 
 
-    mov ah, 0x0E; номер функции BIOS
-    mov bh, 0; страница видеопамяти
-    int 0x10; выводим символ	mov ah,00h
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
 			int 16h
 			 mov al, ah	
 
 
-    mov ah, 0x0E; номер функции BIOS
-    mov bh, 0; страница видеопамяти
-    int 0x10; выводим символ	
+    mov ah, 0x0E
+    mov bh, 0
+    int 0x10
     .no_error:
 ret   
 
 finish:
-    times 510 - ($-$$) db 0 ; тут выравниваем блок кода до размера сектора(512 байт)
-    db 0x55, 0xAA; сигнатура загрузочного сектора
+    times 510 - ($-$$) db 0 
+    db 0x55, 0xAA
     
 
 	
