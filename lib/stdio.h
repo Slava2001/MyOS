@@ -1,11 +1,4 @@
-// CDisplay.h
-
-#ifndef __DISPLAY__
-#define __DISPLAY__
-
-//
-// colors for TextOut func
-//
+#pragma once
 
 #define BLACK			0x0
 #define BLUE			0x1
@@ -25,24 +18,20 @@
 #define WHITE			0xF
 
 #include "Types.h"
-#include "string.h"
+//#include "string.h"
 
 
-void ClearScreen();
+// void ClearScreen();
 void TextOut(
-        const char far* inStrSource,
+        const char *inStrSource,
         byte            inX,
         byte            inY,
         byte            inBackgroundColor,
         byte            inTextColor,
         bool            inUpdateCursor 
         );
-void ShowCursor( bool inMode);
-void printf(const char* str);
-char getc();
-void putc(char out);
-void setCursorPosition(byte X,byte Y);
-
-
-
-#endif // __CDISPLAY__
+// void ShowCursor( bool inMode);
+// void printf(const char* str);
+// char getc();
+// void putc(char out);
+// void setCursorPosition(byte X, byte Y);

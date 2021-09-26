@@ -31,9 +31,8 @@ db 0x46,0x41,0x54,0x31,0x36,0x20,0x20,0x20
 
 
 start:
- 
- 
-           cli
+
+        cli
         mov ax,cs              
         mov ds,ax             
         mov es,ax              
@@ -42,21 +41,35 @@ start:
         mov sp,7c00h            
         sti
 
+    mov si, str_load_data
+    mov cx, [str_load_data_len]
+    call outs
 
-		
+
 	mov al,dl
 	mov [disknum],al						
 			
 
- mov   ax, 0x100        
-    mov   es, ax
-    mov	  bx, 0
-    mov   ch, 0
-    mov   cl, 2   
-	;mov   dl, 0x80
-    mov   dh, 0
-call load
- mov   ax, 0x1e0         
+
+
+    call load
+
+
+
+    mov si, str_loading_sucses
+    mov cx, [str_loading_sucses_len]
+    call outs
+
+    jmp 0x100:0
+    
+jmp $
+
+
+
+
+
+
+    mov   ax, 0x1e0         
     mov   es, ax
     mov	  bx, 0
     mov   ch, 0
@@ -65,92 +78,74 @@ call load
     mov   dh, 0
 call load
    
-    
     pop   ds
     pop   es
     
-     mov al, '>'
-    mov ah, 0x0E
-    mov bh, 0
-    int 0x10
-	
-
+    mov al, '>'
+    call out
 	
 	
-    jmp 0x100:0
+    mov al, '<'
+    call out
 	
-   mov al, '<'
-    mov ah, 0x0E
-    mov bh, 0
-    int 0x10
-	jmp$
    
 load:
 
+    mov ax, 0x100        
+    mov   es, ax
+    mov	  bx, 0
+	mov   dl, [disknum]
+    mov   dh, 0
+    mov   ch, 0
+    mov   cl, 2   
+    mov   al, 1
     mov   ah, 2
-    mov   al, 7
     int   0x13
 			
-	
     jnc .no_error
 	
-    mov al, 8h	
-	add al,48
+    mov si, str_failed_to_load_sector
+    mov cx, [str_failed_to_load_sector_len]
+    call outs
 
-    mov ah, 0x0E
-    mov bh, 0
-    int 0x10
+    mov al, ah
+    call outHex
 
-	 mov al, ah	
-	add al,48
-
-    mov ah, 0x0E
-    mov bh, 0
-    int 0x10
-	 mov al, ah	
-	add al,49
-
-    mov ah, 0x0E
-    mov bh, 0
-    int 0x10
-		
-	mov al,'('
-
-    mov ah, 0x0E
-    mov bh, 0
-    int 0x10
-	
-	
-	
-	
-			mov ah,00h
-			int 16h
-			 mov al, ah	
-
-
-    mov ah, 0x0E
-    mov bh, 0
-    int 0x10
-			int 16h
-			 mov al, ah	
-
-
-    mov ah, 0x0E
-    mov bh, 0
-    int 0x10
-			int 16h
-			 mov al, ah	
-
-
-    mov ah, 0x0E
-    mov bh, 0
-    int 0x10
     .no_error:
 ret   
-
+out:
+    push ax
+    mov ah, 0x0E
+    int 0x10
+    pop ax
+ret
+outHex:
+    push ax
+    add al, 48
+    cmp al, 57
+    jle outHex_skip
+    add al, 7
+    outHex_skip:
+    call out
+    pop ax
+ret
+outs:
+    push ax
+outs_cont:
+    mov al, [si]
+    call out 
+    inc si
+    loop outs_cont
+    pop ax
+ret
+;;;str_data;;;
+str_load_data: db "Loading os...",0xa,0xd
+str_load_data_len: dw ($-str_load_data)
+str_failed_to_load_sector: db "Failed to load sector: 0x0"
+str_failed_to_load_sector_len: dw ($-str_failed_to_load_sector)
+str_loading_sucses: db 0xa,0xd,"Loading os sucsess"
+str_loading_sucses_len: dw ($-str_loading_sucses)
 finish:
     times 510 - ($-$$) db 0 
     db 0x55, 0xAA
-    
-
-	
+    times 512 db 0
