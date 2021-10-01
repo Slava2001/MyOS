@@ -49,12 +49,11 @@ start:
 	mov al,dl
 	mov [disknum],al						
 			
-
-
+    mov al, 'A'
+    mov ah, 0x0E
+    int 0x10
 
     call load
-
-
 
     mov si, str_loading_sucses
     mov cx, [str_loading_sucses_len]
@@ -63,10 +62,6 @@ start:
     jmp 0x100:0
     
 jmp $
-
-
-
-
 
 
     mov   ax, 0x1e0         

@@ -1,9 +1,33 @@
-__asm__(".intel_syntax noprefix\n\t"
-		"mov al, 'X' \n\t"
-		"mov ah, 0x0E \n\t"
-		"mov bh, 0 \n\t"
-		"int 0x10 \n\t"
-		"ret \n\t");
+asm("jmp _main");
+
+
+void putc(c) char c; {
+#asm
+	mov al, #$61
+    mov ah, #$0E
+    int #$10
+#endasm
+}
+
+void clear_screen() {
+	#asm
+	mov al, #$02
+    mov ah, #$00
+    int #$10
+#endasm
+}
+
+void main() {
+	clear_screen();
+	putc('a');
+	putc('a');
+	putc('a');
+	putc('a');
+while(1);
+}
+
+
+
 // // #include "Types.h"
 // // #include "stdio.h"
 // // #include "string.h"
