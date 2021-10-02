@@ -102,7 +102,7 @@ load:
     mov   dh, 0
     mov   ch, 0
     mov   cl, 2   
-    mov   al, 1
+    mov   al, 10
     mov   ah, 2
     int   0x13
 			

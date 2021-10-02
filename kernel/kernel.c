@@ -12,47 +12,28 @@ char NowDirS[20]="A:";
 
 
 void main() {
+	static char comand[20];
 	
 	clear_screen();
 		
-	printf("OS Started...\n\rddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
+	printf("OS Started...\n\r");
 	
-	//char comand[20] = "";
 
     while(1)
 	{
-		//printf("<Slava>: ");
-		// printf(NowDirS);
-		// printf(">");
-		
-		
+		printf("<Slava>: ");
+		printf(NowDirS);
+		printf(">");
 
-		//scanf(comand,20);
-		
-		//strcmp("12","12");
-		//lolo();
-		//if(!strcmp("help","help")) {
-			//printf("   keycode\n\r   cd\n\r   showmem\n\r   diskinfo\n\r   dir\n\r   restart\n\r");
-		//} //else {
-		// 	printf("Error comand!!!\n\r");
-		// }	
+		scanf(comand,20);
+
+		if(!strcmp(comand,"help")) {
+			printf("   keycode\n\r   cd\n\r   showmem\n\r   diskinfo\n\r   dir\n\r   restart\n\r");
+		} else {
+			printf("Error comand!!!\n\r");
+		}	
 	}
 }
-int strcmp(a, b) char *a, *b;
-{
-	int i=0;
-	int delta=0;
-	
-	while(a[i]!='\0' && b[i]!='\0')
-	{
-		delta=a[i]-b[i];
-		if(delta!=0)return delta;
-		i++;
-	}
-	delta=a[i]-b[i];
-	return delta;
-}
-
 
 // // #include "string.h"
 

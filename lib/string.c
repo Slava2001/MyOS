@@ -13,8 +13,21 @@
 
 //         return lenghtOfString;
 // }
-void lolo() {}
 
+int strcmp(a, b) char *a, *b;
+{
+	int i=0;
+	int delta=0;
+	
+	while(a[i]!='\0' && b[i]!='\0')
+	{
+		delta=a[i]-b[i];
+		if(delta!=0)return delta;
+		i++;
+	}
+	delta=a[i]-b[i];
+	return delta;
+}
 
 
 // char * IntChar(unsigned int a)
