@@ -5,193 +5,104 @@ asm(".ascii \"main jmp\"");
 #include "stdio.h"
 
 
-char NowDirS[20]="A:";
+char now_dir_str[20]="A:";
 
-
-
-
+void get_key_code();
+void show_memory();
 
 void main() {
 	static char comand[20];
-	
+
 	clear_screen();
 		
 	printf("OS Started...\n\r");
 	
-
     while(1)
 	{
 		printf("<Slava>: ");
-		printf(NowDirS);
+		printf(now_dir_str);
 		printf(">");
 
 		scanf(comand,20);
 
 		if(!strcmp(comand,"help")) {
-			printf("   keycode\n\r   cd\n\r   showmem\n\r   diskinfo\n\r   dir\n\r   restart\n\r");
+			printf("   keycode\n\r   showmem\n\r");
+		} else if(!strcmp(comand,"keycode")) {
+			get_key_code();
+		} else if(!strcmp(comand,"showmem")) {
+			show_memory();
 		} else {
-			printf("Error comand!!!\n\r");
+			printf("Unknown command. Enter help.\n\r");
 		}	
 	}
 }
 
-// // #include "string.h"
+void get_key_code()
+{
 
-// // word *BytesPerSector;
-// // byte *SectorPerCluster;
-// // word *ReservedSectors;
-// // byte *NumberOfFATs;
-// // word *RootEntries;
-// // word *TotalSectors;
-// // byte *MediaDescriptor;
-// // word *SectorPerFat;
-// // word *SectorPerTrak;
-// // word *Heads;
-// // byte *PhysicalDiskNumber;
-// // char *NowDir;
-// // char NowDirS[20]="A:";
+	char a='\0';
+	clear_screen();
+	printf("Enter ESC to end");
+
+	while(a!=27)
+	{
+
+	printf("\n\rcode of ");
+	a=getc(true);
 
 
-// // void cd();
-// // void getKeyCode();
-// // void ShowMemory();
-// // void ShowDiskInfo();
-// // void Dir(char *baseptr,char *ptr);
-// // void loadSector(void *destptr,void *srcsektor);
+	printf(" :: ");
+	printf(int2char(a));
+	}
 
-// void BootMain()
-// {
+	clear_screen();
+	return;
+}
 
-// 	// char comand[20];
-// 	// BytesPerSector		=0x7c00+0x0b;
-// 	// SectorPerCluster	=0x7c00+0x0d;
-// 	// ReservedSectors		=0x7c00+0x0e;
-// 	// NumberOfFATs		=0x7c00+0x10;
-// 	// RootEntries			=0x7c00+0x11;
-// 	// TotalSectors		=0x7c00+0x13;
-// 	// MediaDescriptor		=0x7c00+0x15;
-// 	// SectorPerFat		=0x7c00+0x16;
-// 	// SectorPerTrak		=0x7c00+0x18;
-// 	// Heads				=0x7c00+0x1a;
-// 	// PhysicalDiskNumber	=0x7c00+0x24;
-// 	// NowDir=*ReservedSectors+*SectorPerFat*(*NumberOfFATs);
-	
-//     // ClearScreen();
-//     // ShowCursor(true);
-	
-	
-// 	// printf("OS Started...\n\r");
-	
-	
-	
-	
-	
-//     while(1)
-// 	{
-// 	__asm__(".intel_syntax noprefix\n\t"
-// 			"mov al, '>' \n\t"
-// 			"mov ah, 0x0E \n\t"
-// 			"mov bh, 0 \n\t"
-// 			"int 0x10 \n\t");
+void show_memory()
+{
+char a='\0';
+	int i=0;
+	char * ptr=0x0;
 
-// 		// printf("<Slava>: ");
-// 		// printf(NowDirS);
-// 		// printf(">");
-		
-// 		// scanf(comand,20);
+	clear_screen();
+	printf("Enter ESC to end. Use \'W\' and \'S\'\n\r");
 
-// 		// if(!strcmp(comand,"help"))
-// 		// 	printf("   keycode\n\r   cd\n\r   showmem\n\r   diskinfo\n\r   dir\n\r   restart\n\r");
-// 		// else if(!strcmp(comand,"keycode"))
-// 		// 	getKeyCode();
-// 		// else if(!strcmp(comand,"showmem"))
-// 		// 	ShowMemory();
-// 		// else if(!strcmp(comand,"diskinfo"))
-// 		// 	ShowDiskInfo();
-// 		// else if(!strcmp(comand,"dir"))
-// 		// 	Dir(0x3000,NowDir);
-// 		// else if(!strcmp(comand,"cd"))
-// 		// 	cd();
-// 		// else if(!strcmp(comand,"restart"))
-// 		// 	break;
-// 		// else
-// 		// 	printf("Error comand!!!\n\r");
-	
-	
-// 	}
+	while(a!=27)
+	{
+		a=getc(false);
+		if(a=='w'||a=='s')
+		{
+			if(a=='w'&& ptr>0)
+				ptr-=32;
 
-//     return;
-// }
+			printf(hex2char(ptr,2));
+			printf(": ");
 
+			for(i=0;i<16;i++)
+			{
+				printf(hex2char(*ptr,1));
+				printf(" ");
+				ptr++;
+			}
+				printf("    ");
+				ptr-=16;
+				for(i=0;i<16;i++)
+				{
+				if(*ptr>32)
+					putc(*ptr);
+				else
+					putc('.');
+				ptr++;
+				}
+			printf("\n\r");
+		}
+	}
 
-// // void getKeyCode()
-// // {
+	clear_screen();
+	return;
+}
 
-// // 	char a='\0';
-// // 	ClearScreen();
-// // 	printf("Enter ESC to end");
-
-// // 	while(a!=27)
-// // 	{
-
-// // 	printf("\n\rcode of ");
-// // 	a=getc();
-
-
-// // 	printf(" :: ");
-// // 	printf(IntChar(a));
-// // 	}
-
-// // 	ClearScreen();
-// // 	return;
-// // }
-
-// // void ShowMemory()
-// // {
-// // char a='\0';
-// // 	int i=0;
-// // 	char far* ptr=0x3000;
-
-// // 	ClearScreen();
-// // 	printf("Enter ESC to end. Use \'W\' and \'S\'\n\r");
-
-// // 	while(a!=27)
-// // 	{
-// // 		a=getc(false);
-// // 		if(a=='w'||a=='s')
-// // 		{
-// // 			if(a=='w'&& ptr>0)
-// // 				ptr-=32;
-
-
-
-
-// // 			printf(HexChar(ptr));
-// // 			printf(": ");
-
-// // 			for(i=0;i<16;i++)
-// // 			{
-// // 				printf(Hex2Char(*ptr));
-// // 				printf(" ");
-// // 				ptr++;
-// // 			}
-// // 				printf("    ");
-// // 				ptr-=16;
-// // 				for(i=0;i<16;i++)
-// // 				{
-// // 				if(*ptr>32)
-// // 					putc(*ptr);
-// // 				else
-// // 					putc('.');
-// // 				ptr++;
-// // 				}
-// // 			printf("\n\r");
-// // 		}
-// // 	}
-
-// // 	ClearScreen();
-// // 	return;
-// // }
 // // void ShowDiskInfo()
 // // {
 

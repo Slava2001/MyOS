@@ -1,3 +1,4 @@
 bin/*
 .vscode
 os.img
+util/out_fat.iso

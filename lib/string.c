@@ -30,39 +30,40 @@ int strcmp(a, b) char *a, *b;
 }
 
 
-// char * IntChar(unsigned int a)
-// {
+char * int2char(a) int a;
+{
 
-// 	char *out="0000000000\0";
-// 	char i=0;
+	static char out[10] = "         ";
+	char i = 8;
 		
-
-// 	for(i=9;i>=-1;i--)
-// 	{
-// 	out[i]=(char)(a%10+48);
-// 	a/=10;
-// 	}
+    for (; i > 0 && a > 0; i--) {  
+        int tmp = a / 10;  
+        out[i] = a - tmp * 10 + '0';
+        a = tmp;
+    }
 	
+	return out + i + 1;
+}
 
-// 	for(i=0;i<9;i++)
-// 		if(out[i]==48)out[i]=' ';else return (out+i);
-	
-// 	return out;
-// }
 
-// char * HexChar(unsigned int a)
-// {
-// 	char *out="0000000000\0";
-// 	char i=0;
+
+char * hex2char(a,l) int a,l;
+{
+	static char out[10] = "000000000";
+    char i = 8;
 		
-// 	for(i=9;i>=-1;i--)
-// 	{
-// 	if((a%16)<10)
-// 		out[i]=(char)(a%16+48);
-// 	else
-// 		out[i]=(char)(a%16+55);
-// 	a/=16;
-// 	}
+    for (; i > 0 && a > 0; i--) {  
+        int tmp = a / 16;  
+        out[i] = a - tmp * 16 + '0';
+        if (out[i] > '9') {
+            out[i] += 'A'-'9' - 1;
+        }
+        a = tmp;
+    }
+	
+	return out + 9 - l*2;
+
+}
 	
 		
 	
