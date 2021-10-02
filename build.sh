@@ -5,7 +5,11 @@ rm os.img
 
 nasm ./bootloader/BootLoader.asm -f bin -o bin/bootloader.bin
 
-bcc -W -0 -c kernel/kernel.c -o bin/kernel.obj
+bcc -Iinclude -W -0 -c kernel/kernel.c -o bin/kernel.obj
+bcc -Iinclude -W -0 -c lib/stdio.c -o bin/stdio.obj
+bcc -Iinclude -W -0 -c lib/string.c -o bin/string.obj
+
+
 
 ld86 -d bin/*.obj -o bin/os.bin
 

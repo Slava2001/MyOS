@@ -1,35 +1,59 @@
 asm("jmp _main");
+asm(".ascii \"main jmp\"");
+
+#include "Types.h"
+#include "stdio.h"
 
 
-void putc(c) char c; {
-#asm
-	mov al, #$61
-    mov ah, #$0E
-    int #$10
-#endasm
-}
+char NowDirS[20]="A:";
 
-void clear_screen() {
-	#asm
-	mov al, #$02
-    mov ah, #$00
-    int #$10
-#endasm
-}
+
+
+
 
 void main() {
+	
 	clear_screen();
-	putc('a');
-	putc('a');
-	putc('a');
-	putc('a');
-while(1);
+		
+	printf("OS Started...\n\rddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd");
+	
+	//char comand[20] = "";
+
+    while(1)
+	{
+		//printf("<Slava>: ");
+		// printf(NowDirS);
+		// printf(">");
+		
+		
+
+		//scanf(comand,20);
+		
+		//strcmp("12","12");
+		//lolo();
+		//if(!strcmp("help","help")) {
+			//printf("   keycode\n\r   cd\n\r   showmem\n\r   diskinfo\n\r   dir\n\r   restart\n\r");
+		//} //else {
+		// 	printf("Error comand!!!\n\r");
+		// }	
+	}
+}
+int strcmp(a, b) char *a, *b;
+{
+	int i=0;
+	int delta=0;
+	
+	while(a[i]!='\0' && b[i]!='\0')
+	{
+		delta=a[i]-b[i];
+		if(delta!=0)return delta;
+		i++;
+	}
+	delta=a[i]-b[i];
+	return delta;
 }
 
 
-
-// // #include "Types.h"
-// // #include "stdio.h"
 // // #include "string.h"
 
 // // word *BytesPerSector;

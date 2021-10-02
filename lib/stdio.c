@@ -1,38 +1,60 @@
 #include "stdio.h"
 
-void TextOut( 
-        const char * inStrSource, 
-        byte            inX, 
-        byte            inY,  
-        byte            inBackgroundColor, 
-        byte            inTextColor,
-        bool            inUpdateCursor
-        )
-{
-    byte textAttribute = ((inTextColor) | (inBackgroundColor << 4));
-    byte lengthOfString = 10;//Strlen(inStrSource);
 
-    __asm__
-	(		
-		".intel_syntax noprefix\n\t"
-        "push	bp \n\t"
-        "mov	al, %0 \n\t"
-        "xor	bh, bh	 \n\t"
-        "mov	bl, %2 \n\t"
-        "xor	cx, cx \n\t"
-        "mov	cl, %1 \n\t"
-        "mov	dh, %4 \n\t"
-        "mov	dl, %5 \n\t"
-        "mov    es, word ptr[%3 + 2] \n\t"
-        "mov    bp, word ptr[%3] \n\t"
-        "mov	ah,	13h \n\t"
-        "int	10h \n\t"
-        "pop	bp \n\t"
-		: "=r"(inUpdateCursor), "=r"(lengthOfString), "=r"(textAttribute), "=r"(lengthOfString), "=r"(inY) , "=r"(inX)
-		: "r"(inUpdateCursor), "r"(lengthOfString), "r"(textAttribute), "r"(lengthOfString), "r"(inX) , "r"(inY)
-		: "%ax", "%bx", "%dx", "%cx"
-	);
+void putc(c) int c; {
+#asm
+    mov ah, #$0e
+#if !__FIST_ARG_IN_AX__
+     mov bx, sp
+     mov al, [bx+2]
+#endif
+     xor bx, bx
+     int #$10
+#endasm
 }
+
+void clear_screen() {
+#asm
+	mov al, #$02
+    mov ah, #$00
+    int #$10
+#endasm
+}
+
+
+// void TextOut( 
+//         const char * inStrSource, 
+//         byte            inX, 
+//         byte            inY,  
+//         byte            inBackgroundColor, 
+//         byte            inTextColor,
+//         bool            inUpdateCursor
+//         )
+// {
+//     byte textAttribute = ((inTextColor) | (inBackgroundColor << 4));
+//     byte lengthOfString = 10;//Strlen(inStrSource);
+
+//     __asm__
+// 	(		
+// 		".intel_syntax noprefix\n\t"
+//         "push	bp \n\t"
+//         "mov	al, %0 \n\t"
+//         "xor	bh, bh	 \n\t"
+//         "mov	bl, %2 \n\t"
+//         "xor	cx, cx \n\t"
+//         "mov	cl, %1 \n\t"
+//         "mov	dh, %4 \n\t"
+//         "mov	dl, %5 \n\t"
+//         "mov    es, word ptr[%3 + 2] \n\t"
+//         "mov    bp, word ptr[%3] \n\t"
+//         "mov	ah,	13h \n\t"
+//         "int	10h \n\t"
+//         "pop	bp \n\t"
+// 		: "=r"(inUpdateCursor), "=r"(lengthOfString), "=r"(textAttribute), "=r"(lengthOfString), "=r"(inY) , "=r"(inX)
+// 		: "r"(inUpdateCursor), "r"(lengthOfString), "r"(textAttribute), "r"(lengthOfString), "r"(inX) , "r"(inY)
+// 		: "%ax", "%bx", "%dx", "%cx"
+// 	);
+// }
 // void ClearScreen()
 // {
 //     __asm
@@ -56,46 +78,34 @@ void TextOut(
 //     }
 // }
 
-// void printf(const char *str)
-// {
-// 	int i=0;
+void printf(str)char *str; {
+	int i=0;
 	
-// 	while(str[i]!='\0')
-// 	{
-// 		putc(str[i]);
-// 		i++;
-// 	}
+	while(str[i]!='\0')
+	{
+		putc(str[i]);
+		i++;
+	}
 	
-// }
+}
 
-// char getc(bool out)
-// {
-// 	char inch='\0';
+static char inch='\0';
+char getc(out) char out;
+{
 	
-// 	__asm
-// 		{
-// 			mov ah,00h
-// 			int 16h
-// 			mov inch,al	
-// 		}
-	
-// 	if(out && inch != '\b' && inch != 0 && inch != '\n')
-// 	putc(inch);
-	
-// 	return inch;
-// }
+#asm
+			mov ah, #$00
+			int #$16
+			mov _inch,al	
+#endasm
 
-// void putc(char out)
-// {
-// 	 __asm
-// 		{
-// 			mov al, out
-// 			mov bh,1h
-// 			mov cx,1h
-// 			mov ah,0eh
-// 			int 10h
-// 		}
-// }
+	if(out && inch > 31)
+	putc(inch);
+	
+	return inch;
+}
+
+
 
 // void setCursorPosition(byte X, byte Y)
 // {
@@ -109,28 +119,29 @@ void TextOut(
 // 		}
 // }
 
-// int scanf(char *ptr, int l)
-// {
-// 	char getch='\0';
-// 	int lenght=0;
-// 	while((getch=getc(true))!=13&&lenght<(l-1))
-// 	{
-// 		if(getch==8)
-// 		{
-// 			if(lenght>0){
-// 			lenght--;
-// 			putc('\b');
-// 			putc('\0');
-// 			putc('\b');}
-// 		}else{
-// 		ptr[lenght]=getch;
-// 		lenght++;
-// 		}
-// 	}
-// 	ptr[lenght]='\0';
-// 	printf("\n\r");
-// 	return lenght;
-// }
+int scanf(ptr, l)char *ptr, l;
+{
+	char getch='\0';
+	int lenght=0;
+	while((getch=getc(true))!=13&&lenght<(l-1))
+	{
+		if(getch==8)
+		{
+			if(lenght>0){
+			lenght--;
+			putc('\b');
+			putc('\0');
+			putc('\b');}
+		}else{
+		ptr[lenght]=getch;
+		lenght++;
+		}
+	}
+	ptr[lenght]='\0';
+	putc(10);
+    putc(13);
+	return lenght;
+}
 
 
 

@@ -59,6 +59,15 @@ start:
     mov cx, [str_loading_sucses_len]
     call outs
 
+    cli
+        mov ax, 0x100             
+        mov ds,ax             
+        mov es,ax              
+        mov ss,ax                 
+        mov bp,7c00h
+        mov sp,7c00h            
+    sti
+
     jmp 0x100:0
     
 jmp $
