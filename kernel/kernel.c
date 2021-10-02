@@ -3,6 +3,7 @@ asm(".ascii \"main jmp\"");
 
 #include "Types.h"
 #include "stdio.h"
+#include "mem.h"
 
 
 char now_dir_str[20]="A:";
@@ -12,7 +13,7 @@ void show_memory();
 
 void main() {
 	static char comand[20];
-
+	byte * test;
 	clear_screen();
 		
 	printf("OS Started...\n\r");
@@ -26,11 +27,13 @@ void main() {
 		scanf(comand,20);
 
 		if(!strcmp(comand,"help")) {
-			printf("   keycode\n\r   showmem\n\r");
+			printf("   keycode\n\r   showmem\n\r   memmap\n\r");
 		} else if(!strcmp(comand,"keycode")) {
 			get_key_code();
 		} else if(!strcmp(comand,"showmem")) {
 			show_memory();
+		} else if(!strcmp(comand,"memmap")) {
+			show_memory_map();
 		} else {
 			printf("Unknown command. Enter help.\n\r");
 		}	
@@ -63,7 +66,7 @@ void show_memory()
 {
 char a='\0';
 	int i=0;
-	char * ptr=0x0;
+	byte *ptr = 0x0;
 
 	clear_screen();
 	printf("Enter ESC to end. Use \'W\' and \'S\'\n\r");
@@ -71,10 +74,14 @@ char a='\0';
 	while(a!=27)
 	{
 		a=getc(false);
-		if(a=='w'||a=='s')
+		if(a=='w'||a=='s'||a=='W'||a=='S')
 		{
-			if(a=='w'&& ptr>0)
+			if(a=='w')
 				ptr-=32;
+			if(a=='W')
+				ptr-=16*17;
+			if(a=='S')
+				ptr+=16*15;
 
 			printf(hex2char(ptr,2));
 			printf(": ");

@@ -33,21 +33,21 @@ int strcmp(a, b) char *a, *b;
 char * int2char(a) int a;
 {
 
-	static char out[10] = "         ";
+	static char out[10] = "000000000";
 	char i = 8;
 		
-    for (; i > 0 && a > 0; i--) {  
+    do {
         int tmp = a / 10;  
         out[i] = a - tmp * 10 + '0';
         a = tmp;
-    }
+    } while (i > 0 && a > 0);
 	
-	return out + i + 1;
+	return out + i;
 }
 
 
 
-char * hex2char(a,l) int a,l;
+char * hex2char(a,l) unsigned int a,l;
 {
 	static char out[10] = "000000000";
     char i = 8;
@@ -60,7 +60,9 @@ char * hex2char(a,l) int a,l;
         }
         a = tmp;
     }
-	
+    for (;i > 0; i--) {
+        out[i] = '0';
+    }
 	return out + 9 - l*2;
 
 }
