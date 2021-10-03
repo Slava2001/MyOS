@@ -88,7 +88,6 @@ byte max_head_num = 0;
 byte max_cylinder_num = 0;
 byte max_sector_num = 0;
 
-
 void init_disk() {
 #asm 
     mov dl, _disk_num
@@ -102,8 +101,8 @@ void init_disk() {
 
 void show_disk_info() {
     printf("Disk info:\n\r");
-    printf("disk num: ");
-    printf(int2char(disk_num));
+    printf("disk num: 0x");
+    printf(hex2char(disk_num, 1));
     printf("\n\rmax head num: ");
     printf(int2char(max_head_num));
     printf("\n\rmax cylinder num: ");

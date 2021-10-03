@@ -32,16 +32,25 @@ int strcmp(a, b) char *a, *b;
 
 char * int2char(a) int a;
 {
-
 	static char out[10] = "000000000";
 	char i = 8;
-		
+    char sign = 0;
+	if (a < 0) {
+        sign = 1;
+        a = -a;
+    }
+
     do {
         int tmp = a / 10;  
         out[i] = a - tmp * 10 + '0';
         a = tmp;
+        i--;
     } while (i > 0 && a > 0);
-	
+    if (sign) {
+        out[i]='-';
+        i--;
+    }
+	i++;
 	return out + i;
 }
 
@@ -66,33 +75,6 @@ char * hex2char(a,l) unsigned int a,l;
 	return out + 9 - l*2;
 
 }
-	
-		
-	
-	
-// 	for(i=0;i<9;i++)
-// 		if(out[i]==48)out[i]=' ';else return (out+i);
-	
-// 	return out+i;
-// }
-// char * Hex2Char(byte a)
-// {
-// 	char *out="00\0";
-// 	char i=0;
-		
-// 	for(i=1;i>=-1;i--)
-// 	{
-// 	if((a%16)<10)
-// 		out[i]=(char)(a%16+48);
-// 	else
-// 		out[i]=(char)(a%16+55);
-// 	a/=16;
-// 	}
-	
-		
-	
-// 	return out;
-// }
 
 // int  strcpy(char* srs,char * des)
 // {

@@ -19,26 +19,14 @@
 #define WHITE			0xF
 
 #include "Types.h"
-//#include "string.h"
+#include "string.h"
 
+#ifdef CRUTCH
+void putc(int c);
 void clear_screen();
-
-
-
-// void ClearScreen();
-// void TextOut(
-//         const char *inStrSource,
-//         byte            inX,
-//         byte            inY,
-//         byte            inBackgroundColor,
-//         byte            inTextColor,
-//         bool            inUpdateCursor 
-//         );
-// void ShowCursor( bool inMode);
-// void printf(char* str);
-//void printf(str)char*str;
-// char getc();
-// void putc(char out);
-// void setCursorPosition(byte X, byte Y);
+void printf(char *str);
+char getc(char out);
+int scanf(char *ptr, char l);
+#endif
 
 #endif

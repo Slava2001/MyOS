@@ -15,12 +15,8 @@ void main() {
 	static char comand[20];
 
 	clear_screen();
-		
-	printf("OS Started...\n\r");
-
-	show_disk_info();
 	init_disk();
-	show_disk_info();
+	printf("OS Started...\n\r");
 
     while(1)
 	{
@@ -31,11 +27,13 @@ void main() {
 		scanf(comand,20);
 
 		if(!strcmp(comand,"help")) {
-			printf("   keycode\n\r   showmem\n\r   memmap\n\r");
+			printf("   keycode\n\r   showmem\n\r   memmap\n\r   diskinfo\n\r");
 		} else if(!strcmp(comand,"keycode")) {
 			get_key_code();
 		} else if(!strcmp(comand,"showmem")) {
 			show_memory();
+		} else if(!strcmp(comand,"diskinfo")) {
+			show_disk_info();
 		} else if(!strcmp(comand,"memmap")) {
 			show_memory_map();
 		} else {
