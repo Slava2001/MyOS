@@ -5,11 +5,11 @@ void putc(c) int c; {
 #asm
     mov ah, #$0e
 #if !__FIST_ARG_IN_AX__
-     mov bx, sp
-     mov al, [bx+2]
+    mov bx, sp
+    mov al, [bx+2]
 #endif
-     xor bx, bx
-     int #$10
+    xor bx, bx
+    int #$10
 #endasm
 }
 
@@ -94,9 +94,9 @@ char getc(out) char out;
 {
 	
 #asm
-			mov ah, #$00
-			int #$16
-			mov _inch,al	
+	mov ah, #$00
+	int #$16
+	mov _inch,al	
 #endasm
 
 	if(out && inch > 31)

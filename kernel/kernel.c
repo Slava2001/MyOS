@@ -13,11 +13,15 @@ void show_memory();
 
 void main() {
 	static char comand[20];
-	byte * test;
+
 	clear_screen();
 		
 	printf("OS Started...\n\r");
-	
+
+	show_disk_info();
+	init_disk();
+	show_disk_info();
+
     while(1)
 	{
 		printf("<Slava>: ");
@@ -263,35 +267,5 @@ char a='\0';
 		
 // // }
 
-// // void loadSector(void * destptr,void * srcsektor)
-// // {
-
-// // 	void * destseg;
-// // 	byte srchead;
-// // 	byte srcsektr;
-// // 	byte disknum=*PhysicalDiskNumber;
-// // 	destseg=(int)destptr/16;
-// // 	destptr=(int)destptr%16;
-
-// // 	srchead=(int)srcsektor/(*SectorPerTrak);
-// // 	srcsektr=(int)srcsektor%(*SectorPerTrak) +1;
-	
-	
-
-// // //    /200 +1
-// // 	__asm
-// // 		{
-// // 		mov   ax, destseg   ; сегмент куда пишем
-// // 		mov   es, ax
-// // 		mov	  bx, destptr    ; адрес куда пишем
-// // 		mov   ch, 0			; дорожка 0
-// // 		mov   cl, srcsektr   	; начиная с сектора 2
-// // 		mov   dl, disknum      ; номер диска
-// // 		mov   dh, srchead          ; номер головки
-// // 		mov   ah, 2h        ; номер функции
-// // 		mov   al, 1h
-// // 		int   13h	
-// // 		}
-// // }
 
 

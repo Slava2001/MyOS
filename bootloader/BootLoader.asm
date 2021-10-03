@@ -47,8 +47,8 @@ start:
 
 
 	mov al,dl
-	mov [disknum],al						
-		
+	mov [disknum],al
+
 
     call load
 
