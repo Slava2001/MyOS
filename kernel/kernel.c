@@ -4,7 +4,7 @@ asm(".ascii \"main jmp\"");
 #include "Types.h"
 #include "stdio.h"
 #include "mem.h"
-
+#include "logo.h"
 
 char now_dir_str[20]="A:";
 
@@ -13,11 +13,22 @@ void show_memory();
 
 void main() {
 	static char comand[20];
+	void *load_sec;
 
 	clear_screen();
 	init_disk();
 	printf("OS Started...\n\r");
+	printf(logo);
+	getc(false);
+	clear_screen();
 
+
+	load_sec = malloc(512);
+	printf("load_adr");
+	printf(hex2char(load_sec, 2));
+	printf("\n\r");
+
+	//load_sector(load_sec, 0x0000);
     while(1)
 	{
 		printf("<Slava>: ");
