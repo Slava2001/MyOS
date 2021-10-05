@@ -7,6 +7,7 @@ void *malloc(word size);
 void free(word start);
 void init_disk();
 void show_disk_info();
+void load_sector(word desk_ptr,word src_sector);
 #endif
 
 

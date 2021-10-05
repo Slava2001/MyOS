@@ -13,6 +13,7 @@ ld86 -d bin/*.obj -o bin/os.bin
 
 FILENAME=bin/os.bin
 FILESIZE=$(stat -c%s "$FILENAME")
+
 if [[ "$FILESIZE" > "5100" ]]; then
   echo -e "\033[31mYou got the right input.\033[0m"
 fi
