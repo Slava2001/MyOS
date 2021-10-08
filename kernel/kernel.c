@@ -5,6 +5,7 @@ asm(".ascii \"main jmp\"");
 #include "stdio.h"
 #include "mem.h"
 #include "logo.h"
+#include "fat.h"
 
 char now_dir_str[20]="A:";
 
@@ -15,13 +16,15 @@ void main() {
 	static char comand[20];
 
 	clear_screen();
+
 	init_disk();
+	init_fat();
 	printf("OS Started...\n\r");
+	
 	// printf(logo);
 	// getc(false);
-	clear_screen();
+//	clear_screen();
 
-	read_byte(0x0012);
 
     while(1)
 	{

@@ -180,6 +180,7 @@ void load_sector(desk_ptr, src_sector)word desk_ptr, src_sector;
     mov _er, ah
 
 #endasm
+
     printf("head: ");
     printf(int2char(hd));
     printf("\n\rcylinder: ");
@@ -193,17 +194,17 @@ void load_sector(desk_ptr, src_sector)word desk_ptr, src_sector;
     printf("\n\r");
 }	
 
-void * load_sec;
 void read_byte(sec)word sec;
 {
+    static void * load_sec;
     load_sec = malloc(512);
     if (!load_sec) {
         printf("Failed to malloc\n\r");
         return;
     }
-//	load_sector(load_sec, sec);
+	load_sector(load_sec, sec);
 	printf("ReadByte: ");
-	printf(hex2char(((word)load_sec),2));
+	printf(hex2char(*(byte*)load_sec, 1));
 	printf("\n\r");
- //   free(load_sec);
+    free(load_sec);
 }

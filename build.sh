@@ -3,13 +3,13 @@ rm bin/*
 
 nasm ./bootloader/BootLoader.asm -f bin -o bin/bootloader.bin
 
-bcc -Iinclude -W -0 -c kernel/kernel.c -o bin/kernel.obj
+bcc -Iinclude -W -0 -c kernel/kernel.c -o bin/kernel.mainobj
 bcc -Iinclude -W -0 -c lib/stdio.c -o bin/stdio.obj
 bcc -Iinclude -W -0 -c lib/string.c -o bin/string.obj
 bcc -Iinclude -W -0 -c lib/memory.c -o bin/memory.obj
 bcc -Iinclude -W -0 -c lib/fat16.c -o bin/fat16.obj
 
-ld86 -d bin/*.obj -o bin/os.bin
+ld86 -d bin/kernel.mainobj -d bin/*.obj -o bin/os.bin
 
 FILENAME=bin/os.bin
 FILESIZE=$(stat -c%s "$FILENAME")
