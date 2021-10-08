@@ -13,7 +13,6 @@ void show_memory();
 
 void main() {
 	static char comand[20];
-	void *load_sec;
 
 	clear_screen();
 	init_disk();
@@ -22,8 +21,7 @@ void main() {
 	// getc(false);
 	clear_screen();
 
-	load_sec = malloc(512);
-	load_sector(load_sec, 0x0000);
+	read_byte(0x0012);
 
     while(1)
 	{

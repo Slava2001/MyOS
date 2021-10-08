@@ -185,3 +185,14 @@ void load_sector(desk_ptr, src_sector)word desk_ptr, src_sector;
     printf(int2char(desk_ptr));
     printf("\n\r");
 }	
+
+read_byte(sec)word sec;
+{
+    static void * load_sec;
+    load_sec = malloc(512);
+	load_sector(load_sec, sec);
+	printf("ReadByte: ");
+	printf(hex2char(*((byte*)load_sec),1));
+	printf("\n\r");
+    free(load_sec);
+}

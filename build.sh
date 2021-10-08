@@ -1,5 +1,5 @@
 rm bin/*
-rm os.img
+# rm os.img
 
 nasm ./bootloader/BootLoader.asm -f bin -o bin/bootloader.bin
 
@@ -18,10 +18,11 @@ if [[ "$FILESIZE" > "5100" ]]; then
   echo -e "\033[31mYou got the right input.\033[0m"
 fi
 
-# dd if=bin/bootloader.bin of=os.img obs=1 count=3 iflag=skip_bytes,count_bytes
-dd if=bin/bootloader.bin of=os.img obs=1 count=512 iflag=skip_bytes,count_bytes
-# dd if=bin/bootloader.bin of=os.img obs=1 skip=62 seek=62 iflag=skip_bytes,count_bytes
+dd if=bin/bootloader.bin of=os.img obs=1 count=3 iflag=skip_bytes,count_bytes
+#dd if=bin/bootloader.bin of=os.img obs=1 count=512 iflag=skip_bytes,count_bytes
+dd if=bin/bootloader.bin of=os.img obs=1 skip=62 seek=62 iflag=skip_bytes,count_bytes
 dd if=bin/os.bin of=os.img seek=1 obs=512 
+dd if=../dskgen/os.img of=os.img skip=11 seek=11  obs=512
 
 # sudo dd if=bin/bootloader.bin of=/dev/sdb obs=1 count=3 iflag=skip_bytes,count_bytes
 # sudo dd if=bin/bootloader.bin of=/dev/sdb obs=1 skip=62 seek=62 iflag=skip_bytes,count_bytes
