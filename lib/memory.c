@@ -51,9 +51,9 @@ void *reserv_block(start, end) word start, end;
 void *malloc(size) word size;
 {
     word count_of_sec = (size - 1) / minimum_size + 1;
-    byte i, s;
+    byte i = 0, s;
 
-    for (; i < 80; i++)
+    for (i = 10; i < 80; i++) // i=10 - save kernel XD
     {
         if (memory_map[cur_seg_ind][i] == 0)
         {
@@ -116,9 +116,12 @@ void show_disk_info() {
 }
 
 
-word hd, cy, sc;
+static word hd, cy, sc, er;
 void load_sector(desk_ptr, src_sector)word desk_ptr, src_sector; 
 {
+    // if(desk_ptr < 0x1400) {
+    //     printf("Ow shit, im sorry. Overwrite kernel?\n\r");
+    // }
 #asm
     desk_ptr: .word 0x0000
     src_sector: .word 0x0000
@@ -174,6 +177,8 @@ void load_sector(desk_ptr, src_sector)word desk_ptr, src_sector;
     mov ah, #$02
     int #$13
     
+    mov _er, ah
+
 #endasm
     printf("head: ");
     printf(int2char(hd));
@@ -181,18 +186,24 @@ void load_sector(desk_ptr, src_sector)word desk_ptr, src_sector;
     printf(int2char(cy));
     printf("\n\rsector: ");
     printf(int2char(sc));
+    printf("\n\rerrpr: ");
+    printf(hex2char(er, 1));
     printf("\n\rdest: ");
-    printf(int2char(desk_ptr));
+    printf(hex2char(desk_ptr, 2));
     printf("\n\r");
 }	
 
-read_byte(sec)word sec;
+void * load_sec;
+void read_byte(sec)word sec;
 {
-    static void * load_sec;
     load_sec = malloc(512);
-	load_sector(load_sec, sec);
+    if (!load_sec) {
+        printf("Failed to malloc\n\r");
+        return;
+    }
+//	load_sector(load_sec, sec);
 	printf("ReadByte: ");
-	printf(hex2char(*((byte*)load_sec),1));
+	printf(hex2char(((word)load_sec),2));
 	printf("\n\r");
-    free(load_sec);
+ //   free(load_sec);
 }
