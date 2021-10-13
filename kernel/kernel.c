@@ -6,6 +6,7 @@ asm(".ascii \"main jmp\"");
 #include "mem.h"
 #include "logo.h"
 #include "fat.h"
+#include "graphic.h"
 
 char now_dir_str[20]="A:";
 
@@ -45,7 +46,10 @@ void main() {
 		} else if(!strcmp(comand,"memmap")) {
 			show_memory_map();
 		} else {
-			printf("Unknown command. Enter help.\n\r");
+			//set_video_mode(VIDEO_MODE_GRAPHIC_320_200);
+			draw_point();
+
+			//printf("Unknown command. Enter help.\n\r");
 		}	
 	}
 }

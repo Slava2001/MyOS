@@ -65,10 +65,10 @@ start:
         mov sp,7c00h            
     sti
 
+   
     jmp 0x100:0
     
 jmp $
-
 
     mov   ax, 0x1e0         
     mov   es, ax
