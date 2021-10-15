@@ -86,10 +86,10 @@ void free(start) word start;
     }
 }
 
-byte disk_num = 0x80;
-byte max_head_num = 0;
-byte max_cylinder_num = 0;
-byte max_sector_num = 0;
+word disk_num = 0x80;
+word max_head_num = 0;
+word max_cylinder_num = 0;
+word max_sector_num = 0;
 
 void init_disk() {
 #asm 
@@ -97,21 +97,22 @@ void init_disk() {
     mov ah, #$08
     int #$13
     mov _max_head_num, dh
-    mov _max_cylinder_num, ch 
-    mov _max_sector_num, cl
+    mov _max_cylinder_num, cx
 #endasm
+    max_sector_num = max_cylinder_num & 0x3f;
+    max_cylinder_num = max_cylinder_num >> 6;              
 }
 
 void show_disk_info() {
     printf("Disk info:\n\r");
     printf("disk num: 0x");
-    printf(hex2char(disk_num, 1));
+    printf(hex2char(disk_num, 2));
     printf("\n\rmax head num: ");
-    printf(int2char(max_head_num));
+    printf(hex2char(max_head_num, 2));
     printf("\n\rmax cylinder num: ");
-    printf(int2char(max_cylinder_num));
+    printf(hex2char(max_cylinder_num, 2));
     printf("\n\rmax sector num: ");
-    printf(int2char(max_sector_num));
+    printf(hex2char(max_sector_num, 2));
     printf("\n\r");
 }
 
@@ -128,7 +129,7 @@ void load_sector(desk_ptr, src_sector)word desk_ptr, src_sector;
     head: .word 0x0000
     cylinder: .word 0x0000
     sector: .word 0x0000
-    cyl_count: .word 0x0000
+    head_count: .word 0x0000
 
     mov bx, sp
     mov ax, [bx+2]
@@ -137,38 +138,41 @@ void load_sector(desk_ptr, src_sector)word desk_ptr, src_sector;
     mov bx, sp
     mov ax, [bx+4]
     mov src_sector, ax
-
+    
     xor dx, dx
     mov ax, src_sector
     mov bx, _max_sector_num
     div bx 
 
-    mov cyl_count, ax
+    mov head_count, ax
     inc dx // sector num start at 1
     mov sector, dx
 
     xor dx, dx
-    mov ax, cyl_count
-    mov bx, _max_cylinder_num
+    mov ax, head_count
+    mov bx, _max_head_num
     inc bx 
     div bx
 
-    mov head, ax
-    mov cylinder, dx
+    mov cylinder, ax
+    mov head, dx
 
     mov ax, head
     mov _hd, ax
     mov ax, cylinder
     mov _cy, ax
-    mov ax, sector  
-    mov _sc, ax
 
     mov dl, _disk_num
     mov dh, head
 
     // TODO fix cylinder and sector pack
-    mov ch, cylinder
-    mov cl, sector
+    mov cl, #$6
+    shl ax, cl
+    or ax, sector
+ //   mov ax, sector  
+    mov _sc, ax
+
+    mov cx, ax
     
     mov ax, _cur_seg
     mov es, ax
@@ -181,17 +185,19 @@ void load_sector(desk_ptr, src_sector)word desk_ptr, src_sector;
 
 #endasm
 
-    printf("head: ");
-    printf(int2char(hd));
-    printf("\n\rcylinder: ");
-    printf(int2char(cy));
-    printf("\n\rsector: ");
-    printf(int2char(sc));
-    printf("\n\rerrpr: ");
-    printf(hex2char(er, 1));
-    printf("\n\rdest: ");
-    printf(hex2char(desk_ptr, 2));
-    printf("\n\r");
+    // printf("head: ");
+    // printf(hex2char(hd, 2));
+    // printf("\n\rcylinder: ");
+    // printf(hex2char(cy, 2));
+    // printf("\n\rsector: ");
+    // printf(hex2char(sc, 2));
+    // printf("\n\rerrpr: ");
+    // printf(hex2char(er, 2));
+    // printf("\n\rsrc: ");
+    // printf(hex2char(src_sector, 2));
+    // printf("\n\rdest: ");
+    // printf(hex2char(desk_ptr, 2));
+    // printf("\n\r\n\r");
 }	
 
 void read_byte(sec)word sec;

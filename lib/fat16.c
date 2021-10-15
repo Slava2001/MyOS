@@ -2,6 +2,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "mem.h"
+#include "fat.h"
 
 byte *fat_header;
 
@@ -12,6 +13,9 @@ word reserved_sectror;
 byte number_of_fat;
 word root_entries;
 word total_sectors;
+word sector_per_fat;
+
+word current_dir;
 
 void init_fat() {
     fat_header = (byte*)malloc(512);
@@ -22,12 +26,15 @@ void init_fat() {
 
     load_sector(fat_header, 0x0000);
 
-    byte_per_sector = fat_header;
-    setor_per_cluster = fat_header;
-    reserved_sectror = fat_header;
-    number_of_fat = fat_header;
-    root_entries = fat_header;
-    total_sectors = fat_header;
+    byte_per_sector = *(word*)(fat_header + 0x0b);
+    setor_per_cluster = *(byte*)(fat_header + 0x0d);
+    reserved_sectror = *(word*)(fat_header + 0x0e);
+    number_of_fat = *(byte*)(fat_header + 0x10);
+    root_entries = *(word*)(fat_header + 0x11);
+    total_sectors = *(word*)(fat_header + 0x13);
+    sector_per_fat = *(word*)(fat_header + 0x16);
+    current_dir = reserved_sectror + number_of_fat*sector_per_fat;
+    free(fat_header);    
 }
 
 void show_fat_info() {
@@ -49,4 +56,73 @@ void show_fat_info() {
     printf("total_sectors: ");
     printf(hex2char(total_sectors, 2));
     printf("\n\r");   
+    printf("sector_per_fat: ");
+    printf(hex2char(sector_per_fat, 2));
+    printf("\n\r");   
+    printf("root_sector: ");
+    printf(hex2char(current_dir, 2));
+    printf("\n\r"); 
+}
+
+void load_root_dir() {
+    void *tmp = malloc(512);
+    load_sector(tmp, current_dir);
+    free(tmp);
+}
+
+void show_current_dir()
+{
+	
+int i=0;
+int n=1;
+
+
+char * dir_ptr;
+char * ptr = current_dir;
+
+dir_ptr = (char*)malloc(512);
+if (!dir_ptr) {
+    printf("Failed to malloc\n\r");
+    return;
+}
+
+load_sector(dir_ptr, ptr);
+		
+while(*dir_ptr!=0) {
+		
+
+		
+		printf("     ");
+
+		
+		for(i=0;i<8;i++)
+		putc(*(dir_ptr+i));
+
+		if(*(dir_ptr+0x0b)==0x10)
+		{
+			printf(" DIR");
+		}else
+		{
+			putc('.');
+			for(;i<11;i++)
+			putc(*(dir_ptr+i));
+		}
+		
+		printf("     ");
+		printf(hex2char(*(dir_ptr+i)));
+		printf("h\n\r");
+		dir_ptr +=32;
+		
+		n++;
+		if(n==16)
+		{
+			if(getc(false)==27)
+			return;
+			n=0;
+			dir_ptr-=0x200;
+			ptr++;
+            load_sector(dir_ptr, ptr);
+		}
+	}
+		
 }

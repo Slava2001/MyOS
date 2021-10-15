@@ -4,9 +4,9 @@ asm(".ascii \"main jmp\"");
 #include "Types.h"
 #include "stdio.h"
 #include "mem.h"
-#include "logo.h"
 #include "fat.h"
 #include "graphic.h"
+//#include "logo.h"
 
 char now_dir_str[20]="A:";
 
@@ -20,12 +20,12 @@ void main() {
 
 	init_disk();
 	init_fat();
+	//load_root_dir();
 	printf("OS Started...\n\r");
 	
 	// printf(logo);
 	// getc(false);
 //	clear_screen();
-
 
     while(1)
 	{
@@ -36,20 +36,21 @@ void main() {
 		scanf(comand,20);
 
 		if(!strcmp(comand,"help")) {
-			printf("   keycode\n\r   showmem\n\r   memmap\n\r   diskinfo\n\r");
+			printf("   keycode\n\r   showmem\n\r   memmap\n\r   diskinfo\n\r   fatinfo\n\r   dir\n\r");
 		} else if(!strcmp(comand,"keycode")) {
 			get_key_code();
 		} else if(!strcmp(comand,"showmem")) {
 			show_memory();
 		} else if(!strcmp(comand,"diskinfo")) {
 			show_disk_info();
+		} else if(!strcmp(comand,"fatinfo")) {
+			show_fat_info();
 		} else if(!strcmp(comand,"memmap")) {
 			show_memory_map();
+		} else if(!strcmp(comand,"dir")) {
+			show_current_dir();
 		} else {
-			//set_video_mode(VIDEO_MODE_GRAPHIC_320_200);
-			draw_point();
-
-			//printf("Unknown command. Enter help.\n\r");
+			printf("Unknown command. Enter help.\n\r");
 		}	
 	}
 }
@@ -124,38 +125,6 @@ char a='\0';
 	return;
 }
 
-// // void ShowDiskInfo()
-// // {
-
-	
-// // 	printf("     DiskNum: ");
-// // 	printf((HexChar(*PhysicalDiskNumber)));
-// // 	printf("h\n\r");
-	
-	
-// // 	printf("     BytesPerSector: ");
-// // 	printf(HexChar(*BytesPerSector));
-// // 	printf("h\n\r     SectorPerCluster: ");
-// // 	printf(HexChar(*SectorPerCluster));
-// // 	printf("h\n\r     ReservedSectors: ");
-// // 	printf(HexChar(*ReservedSectors));
-// // 	printf("h\n\r     NumberOfFATs: ");
-// // 	printf(HexChar(*NumberOfFATs));
-// // 	printf("h\n\r     RootEntries: ");
-// // 	printf(HexChar(*RootEntries));
-// // 	printf("h\n\r     TotalSectors: ");
-// // 	printf(HexChar(*TotalSectors));
-// // 	printf("h\n\r     MediaDescriptor: ");
-// // 	printf(HexChar(*MediaDescriptor));
-// // 	printf("h\n\r     SectorPerFat: ");
-// // 	printf(HexChar(*SectorPerFat));
-// // 	printf("h\n\r     SectorPerTrak: ");
-// // 	printf(HexChar(*SectorPerTrak));
-// // 	printf("h\n\r     Heads: ");
-// // 	printf(HexChar(*Heads));
-// // 	printf("h\n\r");
-// // }
-
 // // void cd()
 // // {
 // // char * baseptr=0x3000;
@@ -224,58 +193,3 @@ char a='\0';
 // // 	printf("Folder not found!\n\r");
 	
 // // }
-
-// // void Dir(char *baseptr, char *ptr)
-// // {
-	
-// // int i=0;
-// // int n=1;
-
-
-// // loadSector((void *)baseptr,ptr);
-		
-
-
-// // while(*baseptr!=0)		
-// // 	{
-		
-
-		
-// // 		printf("     ");
-
-		
-// // 		for(i=0;i<8;i++)
-// // 		putc(*(baseptr+i));
-		 
-// // 		if(*(baseptr+0x0b)==0x10)
-// // 		{
-// // 			printf(" DIR");
-// // 		}else
-// // 		{
-// // 			putc('.');
-// // 			for(;i<11;i++)
-// // 			putc(*(baseptr+i));
-// // 		}
-		
-// // 		printf("     ");
-// // 		printf(HexChar(*(baseptr+i)));
-// // 		printf("h\n\r");
-// // 		baseptr+=32;
-		
-// // 		n++;
-// // 		if(n==16)
-// // 		{
-// // 			if(getc()==27)
-// // 			return;
-// // 			n=0;
-// // 			baseptr-=0x200;
-// // 			ptr++;
-// // 			loadSector(baseptr,ptr);
-			
-// // 		}
-// // 	}
-		
-// // }
-
-
-
