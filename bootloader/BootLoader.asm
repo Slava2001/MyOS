@@ -92,6 +92,17 @@ call load
    
 load:
 
+    mov ax, 0x240        
+    mov   es, ax
+    mov	  bx, 0
+	mov   dl, [disknum]
+    mov   dh, 0
+    mov   ch, 0
+    mov   cl, 12   
+    mov   al, 10
+    mov   ah, 2
+    int   0x13	
+
     mov ax, 0x100        
     mov   es, ax
     mov	  bx, 0
@@ -101,8 +112,8 @@ load:
     mov   cl, 2   
     mov   al, 10
     mov   ah, 2
-    int   0x13
-			
+    int   0x13	
+
     jnc .no_error
 	
     mov si, str_failed_to_load_sector

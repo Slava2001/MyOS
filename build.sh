@@ -16,8 +16,8 @@ ld86 -d bin/kernel.mainobj -d bin/*.obj -o bin/os.bin
 FILENAME=bin/os.bin
 FILESIZE=$(stat -c%s "$FILENAME")
 
-if [[ "$FILESIZE" > "5100" ]]; then
-  echo -e "\033[31mYou got the right input.\033[0m"
+if [[ FILESIZE -gt 10000 ]]; then # 20 sectors
+  echo -e "\033[31mYou got the right input. Size: "$FILESIZE"\033[0m"
 fi
 
 # # dd if=bin/bootloader.bin of=os.img obs=1 count=3 iflag=skip_bytes,count_bytes
