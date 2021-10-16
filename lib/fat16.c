@@ -64,18 +64,14 @@ void show_fat_info() {
     printf("\n\r"); 
 }
 
-void load_root_dir() {
-    void *tmp = malloc(512);
-    load_sector(tmp, current_dir);
-    free(tmp);
+void cd() {
+    
 }
 
-void show_current_dir()
-{
+void show_current_dir() {
 	
 int i=0;
 int n=1;
-
 
 char * dir_ptr;
 char * ptr = current_dir;
@@ -87,29 +83,24 @@ if (!dir_ptr) {
 }
 
 load_sector(dir_ptr, ptr);
-		
-while(*dir_ptr!=0) {
-		
 
-		
+while(*dir_ptr!=0) {
+				
 		printf("     ");
 
-		
 		for(i=0;i<8;i++)
 		putc(*(dir_ptr+i));
 
-		if(*(dir_ptr+0x0b)==0x10)
-		{
+		if(*(dir_ptr+0x0b)==0x10) {
 			printf(" DIR");
-		}else
-		{
+		} else {
 			putc('.');
 			for(;i<11;i++)
 			putc(*(dir_ptr+i));
 		}
 		
 		printf("     ");
-		printf(hex2char(*(dir_ptr+i)));
+		printf(hex2char(*(dir_ptr+i),1));
 		printf("h\n\r");
 		dir_ptr +=32;
 		
@@ -123,6 +114,5 @@ while(*dir_ptr!=0) {
 			ptr++;
             load_sector(dir_ptr, ptr);
 		}
-	}
-		
+	}	
 }

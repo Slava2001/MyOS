@@ -8,6 +8,7 @@ void free(word start);
 void init_disk();
 void show_disk_info();
 void load_sector(word desk_ptr,word src_sector);
+void show_memory();
 #endif
 
 

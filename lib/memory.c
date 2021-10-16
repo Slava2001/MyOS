@@ -13,8 +13,8 @@ dword cur_seg = 0x100;
 dword cur_seg_ind = 0;
 
 
-byte memory_map[][80] = {{10, 1, 1, 1, 1, 1, 1, 1, 1, 1, // kernel
-                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+byte memory_map[][80] = {{20, 1, 1, 1, 1, 1, 1, 1, 1, 1, // kernel
+                          1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -53,7 +53,7 @@ void *malloc(size) word size;
     word count_of_sec = (size - 1) / minimum_size + 1;
     byte i = 0, s;
 
-    for (i = 10; i < 80; i++) // i=10 - save kernel XD
+    for (i = 20; i < 80; i++) // i=20 - save kernel XD
     {
         if (memory_map[cur_seg_ind][i] == 0)
         {
@@ -77,9 +77,14 @@ void *malloc(size) word size;
 
 void free(start) word start;
 {
+
     byte start_poz = start / minimum_size;
     byte size = memory_map[cur_seg_ind][start_poz];
     byte i = start_poz;
+    if (start <= 20) {
+        printf("Failed to free. it kermel memory\n\r");
+        return;
+    }
     for (; i < start_poz + size; i++)
     {
         memory_map[cur_seg_ind][i] = 0;
@@ -213,4 +218,51 @@ void read_byte(sec)word sec;
 	printf(hex2char(*(byte*)load_sec, 1));
 	printf("\n\r");
     free(load_sec);
+}
+
+void show_memory() {
+    char a='\0';
+	int i=0;
+	byte *ptr = 0x0;
+
+	clear_screen();
+	printf("Enter ESC to end. Use \'W\' and \'S\'\n\r");
+
+	while(a!=27)
+	{
+		a=getc(false);
+		if(a=='w'||a=='s'||a=='W'||a=='S')
+		{
+			if(a=='w')
+				ptr-=32;
+			if(a=='W')
+				ptr-=16*17;
+			if(a=='S')
+				ptr+=16*15;
+
+			printf(hex2char(ptr,2));
+			printf(": ");
+
+			for(i=0;i<16;i++)
+			{
+				printf(hex2char(*ptr,1));
+				printf(" ");
+				ptr++;
+			}
+				printf("    ");
+				ptr-=16;
+				for(i=0;i<16;i++)
+				{
+				if(*ptr>32)
+					putc(*ptr);
+				else
+					putc('.');
+				ptr++;
+				}
+			printf("\n\r");
+		}
+	}
+
+	clear_screen();
+	return;
 }

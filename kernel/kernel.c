@@ -6,7 +6,7 @@ asm(".ascii \"main jmp\"");
 #include "mem.h"
 #include "fat.h"
 #include "graphic.h"
-//#include "logo.h"
+#include "logo.h"
 
 char now_dir_str[20]="A:";
 
@@ -20,12 +20,11 @@ void main() {
 
 	init_disk();
 	init_fat();
-	//load_root_dir();
-	printf("OS Started...\n\r");
 	
-	// printf(logo);
-	// getc(false);
-//	clear_screen();
+	printf(logo);
+	getc(false);
+	clear_screen();
+	printf("OS Started...\n\r");
 
     while(1)
 	{
@@ -55,70 +54,16 @@ void main() {
 	}
 }
 
-void get_key_code()
-{
-
+void get_key_code() {
 	char a='\0';
 	clear_screen();
 	printf("Enter ESC to end");
 
-	while(a!=27)
-	{
-
-	printf("\n\rcode of ");
-	a=getc(true);
-
-
-	printf(" :: ");
-	printf(int2char(a));
-	}
-
-	clear_screen();
-	return;
-}
-
-void show_memory()
-{
-char a='\0';
-	int i=0;
-	byte *ptr = 0x0;
-
-	clear_screen();
-	printf("Enter ESC to end. Use \'W\' and \'S\'\n\r");
-
-	while(a!=27)
-	{
-		a=getc(false);
-		if(a=='w'||a=='s'||a=='W'||a=='S')
-		{
-			if(a=='w')
-				ptr-=32;
-			if(a=='W')
-				ptr-=16*17;
-			if(a=='S')
-				ptr+=16*15;
-
-			printf(hex2char(ptr,2));
-			printf(": ");
-
-			for(i=0;i<16;i++)
-			{
-				printf(hex2char(*ptr,1));
-				printf(" ");
-				ptr++;
-			}
-				printf("    ");
-				ptr-=16;
-				for(i=0;i<16;i++)
-				{
-				if(*ptr>32)
-					putc(*ptr);
-				else
-					putc('.');
-				ptr++;
-				}
-			printf("\n\r");
-		}
+	while(a!=27) {
+		printf("\n\rcode of ");
+		a=getc(true);
+		printf(" :: ");
+		printf(int2char(a));
 	}
 
 	clear_screen();
