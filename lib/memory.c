@@ -152,3 +152,88 @@ void show_memory() {
 	clear_screen();
 	return;
 }
+
+static word hd, cy, sc, er;
+void load_sector(word desk_ptr, word src_sector) {
+// it dos not work (
+// some problems with the stack or something else, the arguments are not processed correctly
+
+    // if(desk_ptr < 0x1400) {
+    //     printf("Ow shit, im sorry. Overwrite kernel?\n\r");
+    // }
+#asm
+    desk_ptr: .word 0x0000
+    src_sector: .word 0x0000
+    head: .word 0x0000
+    cylinder: .word 0x0000
+    sector: .word 0x0000
+    head_count: .word 0x0000
+
+    mov bx, sp
+    mov ax, [bx+2]
+    mov desk_ptr, ax
+
+    mov bx, sp
+    mov ax, [bx+4]
+    mov src_sector, ax
+    
+    xor dx, dx
+    mov ax, src_sector
+    mov bx, _max_sector_num
+    div bx 
+
+    mov head_count, ax
+    inc dx // sector num start at 1
+    mov sector, dx
+
+    xor dx, dx
+    mov ax, head_count
+    mov bx, _max_head_num
+    inc bx 
+    div bx
+
+    mov cylinder, ax
+    mov head, dx
+
+    mov ax, head
+    mov _hd, ax
+    mov ax, cylinder
+    mov _cy, ax
+
+    mov dl, _disk_num
+    mov dh, head
+
+    // TODO fix cylinder and sector pack
+    mov cl, #$6
+    shl ax, cl
+    or ax, sector
+ //   mov ax, sector  
+    mov _sc, ax
+
+    mov cx, ax
+    
+    mov ax, _cur_seg
+    mov es, ax
+    mov bx, desk_ptr
+    mov al, #$01
+    mov ah, #$02
+    int #$13
+    
+    mov _er, ah
+
+#endasm
+
+    printf("head: ");
+    printf(hex2char(hd, 2));
+    printf("\n\rcylinder: ");
+    printf(hex2char(cy, 2));
+    printf("\n\rsector: ");
+    printf(hex2char(sc, 2));
+    printf("\n\rerrpr: ");
+    printf(hex2char(er, 2));
+    printf("\n\rsrc: ");
+    printf(hex2char(src_sector, 2));
+    printf("\n\rdest: ");
+    printf(hex2char(desk_ptr, 2));
+    printf("\n\r\n\r");
+}	

@@ -22,4 +22,15 @@ dd if=fat of=os.hda obs=512 seek=21 skip=21
 
 # mount 
 sudo mount os.hda ./myos
+sudo touch myos/file1.txt
+sudo touch myos/file2.txt
+sudo touch myos/file3.txt
+sudo touch myos/file4.txt
+sudo touch myos/file5.txt
+sudo mkdir myos/dir1
+sudo mkdir myos/dir2
+sudo mkdir myos/dir3
+sudo mkdir myos/dir4
+sudo mkdir myos/dir5
+sudo sync
 sudo umount ./myos

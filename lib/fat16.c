@@ -1,12 +1,12 @@
-#include "Types.h"
+#include "types.h"
 #include "stdio.h"
 #include "string.h"
-#include "mem.h"
-#include "fat.h"
+#include "memory.h"
+#include "fat16.h"
 
 byte *fat_header;
 
-//fat header
+// fat header
 word byte_per_sector;
 byte setor_per_cluster;
 word reserved_sectror;
@@ -64,36 +64,32 @@ void show_fat_info() {
     printf("\n\r"); 
 }
 
-void cd() {
-    
-}
+void show_current_dir() {	
+    int i = 0;
+    int n = 1;
 
-void show_current_dir() {
-	
-int i=0;
-int n=1;
+    char *tmp_ptr;
+    char *dir_ptr;
+    char *ptr = current_dir;
 
-char * dir_ptr;
-char * ptr = current_dir;
+    tmp_ptr = dir_ptr = (char*)malloc(512);
+    if (!dir_ptr) {
+        printf("Failed to malloc\n\r");
+        return;
+    }
 
-dir_ptr = (char*)malloc(512);
-if (!dir_ptr) {
-    printf("Failed to malloc\n\r");
-    return;
-}
+    load_sector(dir_ptr, ptr);
 
-load_sector(dir_ptr, ptr);
-
-while(*dir_ptr!=0) {
-				
+    while (*dir_ptr != 0) {
 		printf("     ");
 
-		for(i=0;i<8;i++)
-		putc(*(dir_ptr+i));
+		for (i = 0; i < 8; i++) {
+		    putc(*(dir_ptr+i));
+        }
 
-		if(*(dir_ptr+0x0b)==0x10) {
-			printf(" DIR");
-		} else {
+        if (*(dir_ptr+(int)0x0b) == 0x10) {
+		    printf(" DIR");
+        } else {
 			putc('.');
 			for(;i<11;i++)
 			putc(*(dir_ptr+i));
@@ -102,17 +98,18 @@ while(*dir_ptr!=0) {
 		printf("     ");
 		printf(hex2char(*(dir_ptr+i),1));
 		printf("h\n\r");
-		dir_ptr +=32;
+		dir_ptr += 32;
 		
 		n++;
-		if(n==16)
-		{
-			if(getc(false)==27)
-			return;
-			n=0;
-			dir_ptr-=0x200;
+		if (n == 16) {
+			if(getc(false) == 27) {
+			    return;
+            }
+			n = 0;
+			dir_ptr -= 0x200;
 			ptr++;
             load_sector(dir_ptr, ptr);
 		}
 	}	
+    free(tmp_ptr);
 }

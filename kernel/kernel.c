@@ -2,9 +2,10 @@ asm("jmp _main");
 asm(".ascii \"main jmp\"");
 
 #include "types.h"
-#include "stdio.h"
-#include "memmory.h"
-// #include "fat.h"
+// #include "memmory.h"
+// #include "stdio.h"
+// #include "memmory.h"s
+// #include "fat16.h"
 // #include "graphic.h"
 extern char *logo;
 
@@ -18,7 +19,7 @@ void main() {
 	clear_screen();
 
 	init_disk();
-	// init_fat();
+	init_fat();
 	
 	printf(logo);
 	printf("Press any key....");
@@ -42,12 +43,12 @@ void main() {
 			show_memory();
 		} else if(!strcmp(comand,"diskinfo")) {
 			show_disk_info();
-		//} else if(!strcmp(comand,"fatinfo")) {
-			//show_fat_info();
+		} else if(!strcmp(comand,"fatinfo")) {
+			show_fat_info();
 		} else if(!strcmp(comand,"memmap")) {
 			show_memory_map();
-		//{ else if(!strcmp(comand,"dir")) {
-			//show_current_dir();
+		} else if(!strcmp(comand,"dir")) {
+			show_current_dir();
 		} else {
 			printf("Unknown command. Enter help.\n\r");
 		}	
