@@ -20,6 +20,8 @@ bcc -Iinclude -W -0 -c lib/string.c -o bin/string.obj -ansi
 bcc -Iinclude -W -0 -c lib/memory.c -o bin/memory.obj -ansi
 # compile fat16 lib
 bcc -Iinclude -W -0 -c lib/fat16.c -o bin/fat16.obj -ansi
+# compile math lib
+bcc -Iinclude -W -0 -c lib/math.c -o bin/math.obj -ansi
 
 # link os
 ld86 -d bin/kernel.mainobj bin/*.obj -o bin/os.bin

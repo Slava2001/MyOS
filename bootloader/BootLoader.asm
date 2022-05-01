@@ -55,7 +55,7 @@ start:
         mov es,ax              
         mov ss,ax                 
         mov bp,7c00h
-        mov sp,7c00h            
+        mov sp,0xffff           
     sti
 
     jmp 0x100:0
