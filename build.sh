@@ -30,13 +30,8 @@ if [[ FILESIZE -gt 10000 ]]; then # 20 sectors (240 byte reserve)
 fi
 
 # write bootloader 
-dd if=bin/bootloader.bin of=os.img obs=1 count=3 iflag=skip_bytes,count_bytes,append
-dd if=bin/bootloader.bin of=os.img obs=1 skip=62 seek=62 iflag=skip_bytes,count_bytes,append
+dd if=bin/bootloader.bin of=os.img obs=1 count=3 iflag=skip_bytes,count_bytes
+dd if=bin/bootloader.bin of=os.img obs=1 skip=62 seek=62 iflag=skip_bytes,count_bytes
 
 # write os
 dd if=bin/os.bin of=os.img obs=512 seek=1
-
-# add zeros
-dd if=/dev/zero of=os.img obs=512 count=1 seek=20 # 1-bootloader + 20-os 
-
-# sudo mkfs.fat -F16 -R20 /dev/sdb1
