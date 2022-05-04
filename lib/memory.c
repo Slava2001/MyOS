@@ -2,6 +2,7 @@
 #include "stdio.h"
 #include "string.h"
 #include "memmory.h"
+// #include "math.h"
 
 // byte
 // 512 byte - sector
@@ -19,7 +20,7 @@ byte memory_map[][80] = {{20, 1, 1, 1, 1, 1, 1, 1, 1, 1, // kernel
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                           0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                          0, 0, 0, 0, 0, 0, 0, 0, 0, 0}};
+                          0, 0, 0, 0, 0, 0, 0, 3, 1, 1}}; // stack
 
 void show_memory_map() {
     byte y,x;
@@ -85,13 +86,16 @@ word max_sector_num = 0;
 void init_disk() {
 #asm 
     mov dl, _disk_num
+    mov ah, #$00
+    int #$13
+
+    mov dl, _disk_num
     mov ah, #$08
     int #$13
     mov _max_head_num, dh
-    mov _max_cylinder_num, cx
+    mov _max_sector_num, cl
+    mov _max_cylinder_num, ch
 #endasm
-    max_sector_num = max_cylinder_num & 0x3f;
-    max_cylinder_num = max_cylinder_num >> 6;              
 }
 
 void show_disk_info() {
@@ -153,87 +157,94 @@ void show_memory() {
 	return;
 }
 
-static word hd, cy, sc, er;
-void load_sector(word desk_ptr, word src_sector) {
-// it dos not work (
-// some problems with the stack or something else, the arguments are not processed correctly
 
-    // if(desk_ptr < 0x1400) {
-    //     printf("Ow shit, im sorry. Overwrite kernel?\n\r");
-    // }
+/*
+00H последняя операция выполнена без ошибок
+01H плохая команда: неверный запрос к контроллеру
+02H плохая адресная марка
+03H защита записи: попытка записи на защищенную дискету
+04H ID сектора запорчен или не найден.
+05H ошибка сброса -- _AT_
+08H сбой DMA
+09H перекрытие DMA: попытка записи через 64K-байтовую границу.
+0bH встретился флаг плохой дорожки -- _AT_
+10H сбой CRC: несовпадение контрольной суммы данных.
+11H данные исправлены; исправимая ошибка; исправлено алгоритмом ECC -- _AT_
+20H сбой контроллера
+40H неудачный поиск. Запрошенная дорожка не найдена
+80H Таймаут. Устройство не ответило
+0bbH неопределенная ошибка -- _AT_
+0ffH сбой операции опроса (sense) -- _AT_
+*/
+static word hd = 0, cy = 0, sc = 0, er = 0, cx = 0, dp = 0;
+int load_sector(word desk_ptr, word src_sector) {
+    dp = desk_ptr;
+    cy = udiv(src_sector, ((max_head_num+1) * max_sector_num));
+    hd = udiv(src_sector, max_sector_num);
+    hd = umod(udiv(src_sector, max_sector_num), (max_head_num+1));
+    sc = umod(src_sector, max_sector_num) + 1;
+    cx = (cy << 8) | (sc & 0xff);
+
 #asm
-    desk_ptr: .word 0x0000
-    src_sector: .word 0x0000
-    head: .word 0x0000
-    cylinder: .word 0x0000
-    sector: .word 0x0000
-    head_count: .word 0x0000
-
-    mov bx, sp
-    mov ax, [bx+2]
-    mov desk_ptr, ax
-
-    mov bx, sp
-    mov ax, [bx+4]
-    mov src_sector, ax
-    
-    xor dx, dx
-    mov ax, src_sector
-    mov bx, _max_sector_num
-    div bx 
-
-    mov head_count, ax
-    inc dx // sector num start at 1
-    mov sector, dx
-
-    xor dx, dx
-    mov ax, head_count
-    mov bx, _max_head_num
-    inc bx 
-    div bx
-
-    mov cylinder, ax
-    mov head, dx
-
-    mov ax, head
-    mov _hd, ax
-    mov ax, cylinder
-    mov _cy, ax
-
     mov dl, _disk_num
-    mov dh, head
-
-    // TODO fix cylinder and sector pack
-    mov cl, #$6
-    shl ax, cl
-    or ax, sector
- //   mov ax, sector  
-    mov _sc, ax
-
-    mov cx, ax
-    
+    mov dh, _hd
+    mov cx, _cx
     mov ax, _cur_seg
     mov es, ax
-    mov bx, desk_ptr
+    mov bx, _dp
     mov al, #$01
     mov ah, #$02
     int #$13
-    
     mov _er, ah
-
 #endasm
-
-    printf("head: ");
-    printf(hex2char(hd, 2));
-    printf("\n\rcylinder: ");
-    printf(hex2char(cy, 2));
-    printf("\n\rsector: ");
-    printf(hex2char(sc, 2));
-    printf("\n\rerrpr: ");
-    printf(hex2char(er, 2));
-    printf("\n\rsrc: ");
-    printf(hex2char(src_sector, 2));
-    printf("\n\rdest: ");
-    printf(hex2char(desk_ptr, 2));
-    printf("\n\r\n\r");
+    if (er) {
+        printf("head: ");
+        printf(hex2char(hd, 2));
+        printf("\n\rcylinder: ");
+        printf(hex2char(cy, 2));
+        printf("\n\rsector: ");
+        printf(hex2char(sc, 2));
+        printf("\n\rcx reg: ");
+        printf(hex2char(cx, 2));
+        printf("\n\rerrpr: ");
+        printf(hex2char(er, 2));
+        printf("\n\rsrc: ");
+        printf(hex2char(src_sector, 2));
+        printf("\n\rdest: ");
+        printf(hex2char(desk_ptr, 2));
+        printf("\n\r");
+    }
+    return er;
 }	
+
+// require a specially prepared image
+void load_sector_test() {
+	uint16_t i;
+	uint8_t rc;
+
+	void *ptr = malloc(512);
+	if (!ptr) {
+		printf("Failed to malloc\n\r");
+		return;
+	}
+
+	show_disk_info();
+
+	for (i = 0; i < 32767 && !rc; i++) {
+		rc = load_sector(ptr, i);
+		if (rc) {
+			printf("Failed to load sector. Err: ");
+			printf(hex2char(rc,1));
+			printf("\n\r");
+			return;
+		}
+		printf("exp: ");
+		printf(hex2char(i,2));
+		printf(" loaded: ");
+		printf(hex2char(*((uint16_t*)ptr), 2));
+		printf("\n\r");
+		if (i != *((uint16_t*)ptr))
+		getc(false);
+	}
+	free(ptr);
+}
