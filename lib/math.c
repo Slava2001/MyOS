@@ -1,18 +1,17 @@
 #include "math.h"
 
-static word div_result = 0, aa, bb;
+static word div_result;
 
 word udiv(word a, word b) {
 #asm 
+    xor dx, dx
     mov bx, sp
     mov ax, [bx+2]
-    mov _aa, ax
     mov bx, [bx+4]
-    mov _bb, bx
     div bx
     mov _div_result, ax
 #endasm    
-    return div_result & 0x7fff;
+    return div_result;
 }
 
 static word mod_result = 0;
