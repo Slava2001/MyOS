@@ -38,7 +38,7 @@ void init_fat() {
 }
 
 void show_fat_info() {
-    printf("BytesPerSector: ");
+    printf("bytes_per_sector: ");
     printf(hex2char(byte_per_sector, 2));
     printf("\n\r");
     printf("setor_per_cluster: ");
@@ -80,24 +80,25 @@ void show_current_dir() {
 
     load_sector(dir_ptr, ptr);
 
-    while (*dir_ptr != 0) {
+    while (*(byte*)dir_ptr != 0) {
 		printf("     ");
 
-		for (i = 0; i < 8; i++) {
+		// file name
+        for (i = 0; i < 8; i++) {
 		    putc(*(dir_ptr+i));
         }
 
+        // file extension 
         if (*(dir_ptr+(int)0x0b) == 0x10) {
 		    printf(" DIR");
         } else {
-			putc('.');
-			for(;i<11;i++)
-			putc(*(dir_ptr+i));
+			putc(' ');
+			for(;i<11;i++) {
+			    putc(*(dir_ptr+i));
+            }
 		}
-		
-		printf("     ");
-		printf(hex2char(*(dir_ptr+i),1));
-		printf("h\n\r");
+		printf("\n\r");
+
 		dir_ptr += 32;
 		
 		n++;
