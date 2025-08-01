@@ -33,6 +33,73 @@ start:
 
 jmp $
 
+
+; 02H читать секторы
+;      вход: DL = номер диска (0=диск A...; 80H=тв.диск 0; 81H=тв.диск 1)
+;            DH = номер головки чтения/записи
+;            CH = номер дорожки (цилиндра)(0-n) =¬
+;            CL = номер сектора (1-n) ===========¦== См. замечание ниже.
+;            AL = число секторов (в сумме не больше чем один цилиндр)
+;            ES:BX => адрес буфера вызывающей программы
+;            0:0078 => таблица параметров дискеты (для гибких дисков)
+;            0:0104 => таблица параметров тв.диска (для твердых дисков)
+;    выход: Carry-флаг=1 при ошибке и код ошибки диска в AH.
+;           ES:BX буфер содержит данные, прочитанные с диска
+;           замечание: на сектор и цилиндр отводится соответственно 6 и 10 бит:
+;                  1 1 1 1 1 1
+;                 +5-4-3-2-1-0-9-8-7-6-5-4-3-2-1-0+
+;             CX: ¦c c c c c c c c C c S s s s s s¦
+;                 +-+-+-+-+-+-+-+-¦-+-+-+-+-+-+-+-+
+;                                 +======> исп. как старшие биты номера цилиндра
+
+SECOND_BOOTLOADER_SIZE_SECTORS equ 10
+
+load_second_bootloader:
+    ; AH = 0x02 - Read sectors, AL = 40 - 
+    mov AH, 0x02 ; Subfunction 0x02 - Read sectors
+    mov DL, 0x80 ; Disk number 
+    mov DH, 0x00 ; Head number
+    mov CX, 0x0C ; Track number 15-6 bit, Sector number - 5-0 bit
+    mov AL, SECOND_BOOTLOADER_SIZE_SECTORS; Num of sectors to load
+    ES:BX
+
+    mov   es, ax
+    mov	  bx, 0
+	mov   dl, [disknum]
+    mov   dh, 0
+    mov   ch, 0
+    mov   cl, 12   
+    mov   al, 10
+    mov   ah, 2
+    int   0x13	
+
+    mov ax, 0x100        
+    mov   es, ax
+    mov	  bx, 0
+	mov   dl, [disknum]
+    mov   dh, 0
+    mov   ch, 0
+    mov   cl, 2   
+    mov   al, 10
+    mov   ah, 2
+    int   0x13	
+
+    jnc .no_error
+	
+    mov si, str_failed_to_load_sector
+    mov cx, [str_failed_to_load_sector_len]
+    call outs
+
+    mov al, ah
+    call outHex
+
+    .no_error:
+ret   
+
+
+
+
+
 ; Outputs char provided in `AL`    
 out_char:
     push AX
