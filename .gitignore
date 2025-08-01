@@ -1,7 +1,1 @@
-bin/*
 .vscode
-os.img
-os.hda
-fat
-util/out_fat.iso
-myos
