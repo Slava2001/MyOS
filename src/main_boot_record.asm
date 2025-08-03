@@ -17,34 +17,39 @@ start:
         mov SS, AX
         mov BP, 0x7C00
         mov SP, 0x7C00
-        ; add interrupt 0x20 handler
-        mov word [0x20 * 4], word out_asciz
-        mov word [0x20 * 4 + 2], 0x0000
     sti
 
     ; print start message
     mov SI, str_start_loading
-    int 0x20
+    call out_asciz
 
     ; print disk number
     mov SI, str_disk_num
-    int 0x20
+    call out_asciz
     mov AL, DL
     call out_hex_byte
     mov SI, str_new_line
-    int 0x20
+    call out_asciz
 
     ; load second bootloader
     call load_second_bootloader
 
     ; print ok message
     mov SI, str_load_ok
-    int 0x20
+    call out_asciz
     mov SI, str_new_line
-    int 0x20
+    call out_asciz
+
+    ; cli
+    ;     ; setup registers
+    ;     mov AX, 0x7E00
+    ;     mov CS, AX
+    ;     ; mov DS, AX
+    ;     ; mov ES, AX
+    ; sti
 
     ; jump on second bootloader
-    jmp 0x7E00
+    jmp 0x07E0:0x0
 
 hold:
     cli
@@ -68,11 +73,11 @@ load_second_bootloader:
     int 0x13
     jnc .no_error
         mov SI, str_failed_to_load_sector
-        int 0x20
+        call out_asciz
         mov AL, AH ; AH - error code
         call out_hex_byte;
         mov SI, str_new_line
-        int 0x20
+        call out_asciz
         jmp hold
     .no_error:
     pop ES

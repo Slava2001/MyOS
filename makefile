@@ -23,9 +23,16 @@ build_mbr: ./src/main_boot_record.asm
 	@nasm ./src/main_boot_record.asm -f bin -o $(BUILDDIR)/mbr.bin
 	@echo "[build] Compiling the MBR: OK"
 
-build_bootloader: ./src/bootloader.asm
-	@nasm ./src/bootloader.asm -f bin -o $(BUILDDIR)/bootloader.bin
-	@echo "[build] Compiling the second bootloader: OK"
+build_bootloader: build_bootloader_srt build_bootloader_main
+	@ld86 -d -o $(BUILDDIR)/bootloader.bin $(BUILDDIR)/crt0.o $(BUILDDIR)/bootloader_main.o
+
+build_bootloader_srt: ./src/bootloader/srt0.asm
+	@nasm ./src/bootloader/srt0.asm -f as86 -o $(BUILDDIR)/crt0.o
+	@echo "[build] Compiling the srt0: OK"
+
+build_bootloader_main: ./src/bootloader/main.c
+	@bcc -ansi -0 -f -c ./src/bootloader/main.c -o $(BUILDDIR)/bootloader_main.o
+	@echo "[build] Compiling the second bootloader main: OK"
 
 img:
 	@rm -f $(IMG_NAME)
