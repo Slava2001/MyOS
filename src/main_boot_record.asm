@@ -9,98 +9,77 @@ times 3 - ($-$$) db 0
 times 62 - ($-$$) db 0
 
 start:
-    ; setup registers
     cli
-        mov AX, CS              
-        mov DS, AX             
-        mov ES, AX              
-        mov SS, AX                 
+        ; setup registers
+        mov AX, CS
+        mov DS, AX
+        mov ES, AX
+        mov SS, AX
         mov BP, 0x7C00
-        mov SP, 0x7C00           
+        mov SP, 0x7C00
+        ; add interrupt 0x20 handler
+        mov word [0x20 * 4], word out_asciz
+        mov word [0x20 * 4 + 2], 0x0000
     sti
 
     ; print start message
     mov SI, str_start_loading
-    call out_asciz
+    int 0x20
 
     ; print disk number
     mov SI, str_disk_num
-    call out_asciz
+    int 0x20
     mov AL, DL
     call out_hex_byte
     mov SI, str_new_line
-    call out_asciz
+    int 0x20
 
-jmp $
+    ; load second bootloader
+    call load_second_bootloader
 
+    ; print ok message
+    mov SI, str_load_ok
+    int 0x20
+    mov SI, str_new_line
+    int 0x20
 
-; 02H читать секторы
-;      вход: DL = номер диска (0=диск A...; 80H=тв.диск 0; 81H=тв.диск 1)
-;            DH = номер головки чтения/записи
-;            CH = номер дорожки (цилиндра)(0-n) =¬
-;            CL = номер сектора (1-n) ===========¦== См. замечание ниже.
-;            AL = число секторов (в сумме не больше чем один цилиндр)
-;            ES:BX => адрес буфера вызывающей программы
-;            0:0078 => таблица параметров дискеты (для гибких дисков)
-;            0:0104 => таблица параметров тв.диска (для твердых дисков)
-;    выход: Carry-флаг=1 при ошибке и код ошибки диска в AH.
-;           ES:BX буфер содержит данные, прочитанные с диска
-;           замечание: на сектор и цилиндр отводится соответственно 6 и 10 бит:
-;                  1 1 1 1 1 1
-;                 +5-4-3-2-1-0-9-8-7-6-5-4-3-2-1-0+
-;             CX: ¦c c c c c c c c C c S s s s s s¦
-;                 +-+-+-+-+-+-+-+-¦-+-+-+-+-+-+-+-+
-;                                 +======> исп. как старшие биты номера цилиндра
+    ; jump on second bootloader
+    jmp 0x7E00
+
+hold:
+    cli
+    hlt
+    jmp hold
 
 SECOND_BOOTLOADER_SIZE_SECTORS equ 10
-
+; Load second bootloader from boot disk, witch number provided in `DL`
+; Bootloader must start in second sector an has length 10 sectors
 load_second_bootloader:
-    ; AH = 0x02 - Read sectors, AL = 40 - 
+    pusha
+    push ES
     mov AH, 0x02 ; Subfunction 0x02 - Read sectors
-    mov DL, 0x80 ; Disk number 
+    ;   DL       - Disk number, provided as arg
     mov DH, 0x00 ; Head number
-    mov CX, 0x0C ; Track number 15-6 bit, Sector number - 5-0 bit
+    mov CX, 0x02 ; Track number 15-6 bit, Sector number - 5-0 bit
     mov AL, SECOND_BOOTLOADER_SIZE_SECTORS; Num of sectors to load
-    ES:BX
-
-    mov   es, ax
-    mov	  bx, 0
-	mov   dl, [disknum]
-    mov   dh, 0
-    mov   ch, 0
-    mov   cl, 12   
-    mov   al, 10
-    mov   ah, 2
-    int   0x13	
-
-    mov ax, 0x100        
-    mov   es, ax
-    mov	  bx, 0
-	mov   dl, [disknum]
-    mov   dh, 0
-    mov   ch, 0
-    mov   cl, 2   
-    mov   al, 10
-    mov   ah, 2
-    int   0x13	
-
+    mov BX, 0x00
+    mov ES, BX
+    mov BX, 0x7E00
+    int 0x13
     jnc .no_error
-	
-    mov si, str_failed_to_load_sector
-    mov cx, [str_failed_to_load_sector_len]
-    call outs
-
-    mov al, ah
-    call outHex
-
+        mov SI, str_failed_to_load_sector
+        int 0x20
+        mov AL, AH ; AH - error code
+        call out_hex_byte;
+        mov SI, str_new_line
+        int 0x20
+        jmp hold
     .no_error:
-ret   
+    pop ES
+    popa
+ret
 
-
-
-
-
-; Outputs char provided in `AL`    
+; Outputs char provided in `AL`
 out_char:
     push AX
     mov AH, 0x0E
@@ -148,9 +127,11 @@ out_hex_byte:
 ret
 
 ; Strings
-str_disk_num: db "Disk number: ", 0
-str_start_loading: db "Start loading bootloader...", 
+str_disk_num: db "Disk number: 0x", 0
+str_start_loading: db "Start loading bootloader...",
 str_new_line: db 13, 10, 0
+str_failed_to_load_sector: db "Failed to load sector, error code: 0x", 0
+str_load_ok: db "Second bootloader loaded: OK", 13, 10, 0
 
-times 510 - ($-$$) db 0 
+times 510 - ($-$$) db 0
 db 0x55, 0xAA
