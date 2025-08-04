@@ -40,13 +40,15 @@ start:
     mov SI, str_new_line
     call out_asciz
 
-    ; cli
-    ;     ; setup registers
-    ;     mov AX, 0x7E00
-    ;     mov CS, AX
-    ;     ; mov DS, AX
-    ;     ; mov ES, AX
-    ; sti
+    cli
+        ; setup registers
+        mov AX, 0x7E0
+        mov DS, AX
+        mov ES, AX
+        mov SS, AX
+        mov SP, 0xFFFF
+        mov BP, 0xFFFF
+    sti
 
     ; jump on second bootloader
     jmp 0x07E0:0x0

@@ -10,29 +10,51 @@ default: help
 help:
 	@echo "Available commands:"
 	@echo "  make build   - compile the project"
+	@echo "  make clean   - remove compile artifacts"
 	@echo "  make img     - create a disk image"
 	@echo "  make run     - run the OS in qemu"
 
-build: create_builddir build_mbr build_bootloader
+build: create_builddir mbr bootloader
 	@echo "[build] Compiling the project: OK"
 
 create_builddir:
 	@mkdir -p $(BUILDDIR)
 
-build_mbr: ./src/main_boot_record.asm
+clean:
+	@rm -rf $(BUILDDIR)/*
+
+# Build main boor record
+
+mbr: ./src/main_boot_record.asm
 	@nasm ./src/main_boot_record.asm -f bin -o $(BUILDDIR)/mbr.bin
 	@echo "[build] Compiling the MBR: OK"
 
-build_bootloader: build_bootloader_srt build_bootloader_main
-	@ld86 -d -o $(BUILDDIR)/bootloader.bin $(BUILDDIR)/crt0.o $(BUILDDIR)/bootloader_main.o
+# Build second bootloader
 
-build_bootloader_srt: ./src/bootloader/srt0.asm
-	@nasm ./src/bootloader/srt0.asm -f as86 -o $(BUILDDIR)/crt0.o
-	@echo "[build] Compiling the srt0: OK"
+bootloader: bootloader_crt bootloader_main lib_stdio
+	@ld86 -d -o $(BUILDDIR)/bootloader.bin $(BUILDDIR)/crt0.o $(BUILDDIR)/bootloader_main.o $(BUILDDIR)/*.olib
 
-build_bootloader_main: ./src/bootloader/main.c
-	@bcc -ansi -0 -f -c ./src/bootloader/main.c -o $(BUILDDIR)/bootloader_main.o
+bootloader_crt: ./src/bootloader/crt0.asm
+	@nasm ./src/bootloader/crt0.asm -f as86 -o $(BUILDDIR)/crt0.o
+	@echo "[build] Compiling the crt0: OK"
+
+bootloader_main: ./src/bootloader/main.c
+	@bcc -ansi -0 -f -Iinclude -W -c ./src/bootloader/main.c -o $(BUILDDIR)/bootloader_main.o
 	@echo "[build] Compiling the second bootloader main: OK"
+
+# Build c libs
+
+lib_stdio: ./src/lib/stdio.c lib_math
+	@bcc -ansi -0 -f -Iinclude -W -c $< -o $(BUILDDIR)/stdio.olib
+	@echo "[build] Compiling the $<: OK"
+
+# Build asm libs
+
+lib_math: ./src/lib/math.asm
+	@nasm $< -f as86 -o $(BUILDDIR)/math.olib
+	@echo "[build] Compiling the $<: OK"
+
+# Create image
 
 img:
 	@rm -f $(IMG_NAME)
@@ -47,6 +69,8 @@ img:
 	@dd if=$(BUILDDIR)/bootloader.bin of=$(IMG_NAME) bs=512 seek=1 conv=notrunc iflag=skip_bytes,count_bytes > /dev/null 2>&1
 	@echo "[img] Writing second bootloader: OK"
 	@echo "[img] Creating disk image: OK"
+
+# Run qemu
 
 run: build img
 	@echo "[run] Running in emulator..."

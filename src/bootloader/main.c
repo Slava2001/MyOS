@@ -1,32 +1,17 @@
-void putc(c) int c; {
-#asm
-    mov ah, #$0e
-#if !__FIST_ARG_IN_AX__
-    mov bx, sp
-    mov al, [bx+2]
+#include "stdio.h"
+
+#if __FIST_ARG_IN_AX__
+#error "First arg in AX unsupported!!!"
 #endif
-    xor bx, bx
-    int #$10
-#endasm
-}
 
-void clear_screen() {
-#asm
-	mov al, #$02
-    mov ah, #$00
-    int #$10
-#endasm
-}
-
-char now_dir_str[30]="A:zxcxcxczxczxczxczx";
-int kernel_main() {
+int bootloader_main() {
     clear_screen();
-    putc('H');
-    putc('e');
-    putc('l');
-    putc('l');
-    putc('0');
-    putc('!');
+    printf("Bootloader started\r\n");
+    printf("num: %% %d\r\n", 12345);
+    printf("num: %% %d\r\n", -3);
+    printf("num: %% %d\r\n", 31);
+    printf("num: %% %x\r\n", -0xabcd);
+    printf("num: %% %b\r\n", 10);
     while(1) {}
     return 0;
 }
