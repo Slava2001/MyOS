@@ -26,6 +26,7 @@ void puts(str) char *str; {
     }
 }
 
+#define push_char(ch) if (buff > end_ptr) { buff--; *buff = ch; } else { return buff; }
 /**
  * Print integer in provided buffer
  * @param val value to print
@@ -34,32 +35,37 @@ void puts(str) char *str; {
  * @param len buff len
  * @return pointer to null-terminated string, witch contain val representation in given base
  */
-char* print_int(val, base, buff, len) int val; int len, base; char *buff; {
-    #define push_char(ch) if (buff > end_ptr) { buff--; *buff = ch; } else { return buff; }
-    int sign;
-    char tmp;
-    char *end_ptr;
-    end_ptr = buff;
-    sign = val < 0;
-    if (sign) {
-        val = -val;
-    }
-    buff = buff + len - 1;
-    push_char(0);
-    do {
-        tmp = '0' + val % base;
-        if (tmp > '9') {
-            tmp += 'A' - '9' - 1;
-        }
-        push_char('0' + val % base);
-        val = val / base;
-    } while (val > 0);
-    if (sign) {
-        push_char('-');
-    }
-    return buff;
-    #undef push_char
+#define print_func(func_name, val_type) \
+char* func_name(val, base, buff, len) val_type val; int len, base; char *buff; { \
+    int sign; \
+    char tmp; \
+    char *end_ptr; \
+    end_ptr = buff; \
+    sign = val < 0; \
+    if (sign) { \
+        val = -val; \
+    } \
+    buff = buff + len - 1; \
+    push_char(0); \
+    do { \
+        tmp = '0' + val % base; \
+        if (tmp > '9') { \
+            tmp += 'A' - '9' - 1; \
+        } \
+        push_char('0' + val % base); \
+        val = val / base; \
+    } while (val > 0); \
+    if (sign) { \
+        push_char('-'); \
+    } \
+    return buff; \
 }
+
+print_func(print_int, int)
+print_func(print_lint, long)
+// print_func(print_uint, unsigned int)
+print_func(print_ulint, unsigned long)
+#undef push_char
 
 #define TMP_BUFF_SIZE 128
 void printf(fmt) char *fmt; {
@@ -77,11 +83,30 @@ void printf(fmt) char *fmt; {
                 case 'd':
                     puts(print_int(*(int *)arg_ptr, 10, tmp_buff, TMP_BUFF_SIZE));
                 break;
+                case 'u':
+                    // puts(print_uint(*(unsigned int *)arg_ptr, 10, tmp_buff, TMP_BUFF_SIZE));
+                break;
                 case 'x':
-                    puts(print_int(*(int *)arg_ptr, 16, tmp_buff, TMP_BUFF_SIZE));
+                    // puts(print_uint(*(unsigned int *)arg_ptr, 16, tmp_buff, TMP_BUFF_SIZE));
                 break;
                 case 'b':
-                    puts(print_int(*(int *)arg_ptr, 2, tmp_buff, TMP_BUFF_SIZE));
+                    // puts(print_uint(*(unsigned int *)arg_ptr, 2, tmp_buff, TMP_BUFF_SIZE));
+                break;
+                case 'l':
+                    switch (*fmt++) {
+                    case 'd':
+                        puts(print_lint(*(long *)arg_ptr, 10, tmp_buff, TMP_BUFF_SIZE));
+                    break;
+                    case 'u':
+                        puts(print_ulint(*(unsigned long *)arg_ptr, 10, tmp_buff, TMP_BUFF_SIZE));
+                    break;
+                    case 'x':
+                        puts(print_ulint(*(unsigned long *)arg_ptr, 16, tmp_buff, TMP_BUFF_SIZE));
+                    break;
+                    case 'b':
+                        puts(print_ulint(*(unsigned long *)arg_ptr, 2, tmp_buff, TMP_BUFF_SIZE));
+                    break;
+                    }
                 break;
             }
         } else {
