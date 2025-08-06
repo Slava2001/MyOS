@@ -31,7 +31,7 @@ mbr: ./src/main_boot_record.asm
 
 # Build second bootloader
 
-bootloader: bootloader_crt bootloader_main lib_stdio
+bootloader: bootloader_crt bootloader_main lib_stdio lib_math lib_disk
 	@ld86 -d -o $(BUILDDIR)/bootloader.bin $(BUILDDIR)/crt0.o $(BUILDDIR)/bootloader_main.o $(BUILDDIR)/*.olib
 	@if [ "$$(stat -c %s $(BUILDDIR)/bootloader.bin)" -gt "$$((512 * $(SECOND_BOOTLOADER_SIZE_SECTORS)))" ]; then \
 	    exit 1; \
@@ -45,17 +45,21 @@ bootloader_main: ./src/bootloader/main.c
 	@bcc -ansi -0 -f -Iinclude -W -c ./src/bootloader/main.c -o $(BUILDDIR)/bootloader_main.o
 	@echo "[build] Compiling the second bootloader main: OK"
 
-# Build c libs
+# Build libs
 
-lib_stdio: ./src/lib/stdio.c lib_math
-	@bcc -ansi -0 -f -Iinclude -W -c $< -o $(BUILDDIR)/stdio.olib
-	@echo "[build] Compiling the $<: OK"
-
-# Build asm libs
+lib_stdio: ./src/lib/stdio.c ./src/lib/stdio.asm lib_math
+	@bcc -ansi -0 -f -Iinclude -W -c ./src/lib/stdio.c -o $(BUILDDIR)/stdio.olib
+	@nasm ./src/lib/stdio.asm -f as86 -o $(BUILDDIR)/stdio_asm.olib
+	@echo "[build] Compiling the lib_stdio: OK"
 
 lib_math: ./src/lib/math.asm
 	@nasm $< -f as86 -o $(BUILDDIR)/math.olib
-	@echo "[build] Compiling the $<: OK"
+	@echo "[build] Compiling the lib_math: OK"
+
+lib_disk: ./src/lib/disk.c ./src/lib/disk.asm
+	@bcc -ansi -0 -f -Iinclude -W -c ./src/lib/disk.c -o $(BUILDDIR)/disk.olib
+	@nasm ./src/lib/disk.asm -f as86 -o $(BUILDDIR)/disk_asm.olib
+	@echo "[build] Compiling the lib_disk: OK"
 
 # Create image
 
