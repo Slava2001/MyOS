@@ -6,7 +6,6 @@ global laddl
 global lcmpul
 global lnegl
 global laddul
-
 global lsubul
 global lsubl
 global ldivul
@@ -63,14 +62,15 @@ lmodl:
     mov DX, [di + 2]
     mov CX, [di]
     call __i32_divmod
-    mov AX, CX
     mov BX, DX
+    mov AX, CX
     pop SI
     pop CX
     pop DX
 ret
 
-; BX:AX / DX:CX = AX:BX (CX:DX)
+; BX:AX / DX:CX = BX:AX (DX:CX)
+;                (SI:DI)
 __i32_divmod:
     push BP
     mov BP, SP
@@ -108,38 +108,22 @@ __i32_divmod:
     pop AX
     .skip_invert_b:
 
-    xor SI, SI
-    xor DI, DI
-
-    .div_loop:
-        cmp BX, DX
-        jne .cmp_done
-        cmp AX, CX
-        .cmp_done:
-        jl .div_loop_done
-        sub AX, CX
-        sbb BX, DX
-        add DI, 1
-        adc SI, 0
-    jmp .div_loop
-    .div_loop_done:
-
-    mov DX, BX
-    mov CX, AX
+    call __u32_divmod
 
     ; if sign flag is 1 (1 arg is neg) invert result
+    push AX
     xor AX, AX
     mov AL, [BP + 4]
     test AL, 1
     jz .skip_neg_res
-    not DI
-    not SI
-    add DI, 1
-    adc SI, 0
+    pop AX
+    not AX
+    not BX
+    add AX, 1
+    adc BX, 0
+    push AX
     .skip_neg_res:
-
-    mov BX, SI
-    mov AX, DI
+    pop AX
 
     dec SP
     pop DI
@@ -165,8 +149,8 @@ lmodul:
     mov DX, [di + 2]
     mov CX, [di]
     call __u32_divmod
-    mov AX, CX
     mov BX, DX
+    mov AX, CX
     pop SI
     pop CX
     pop DX
@@ -184,7 +168,8 @@ ldivul:
     pop DX
 ret
 
-; BX:AX / DX:CX = AX:BX (CX:DX)
+; BX:AX / DX:CX = BX:AX (DX:CX)
+;                (SI:DI)
 __u32_divmod:
     push BP
     mov BP, SP
@@ -195,59 +180,23 @@ __u32_divmod:
     xor DI, DI
 
     .div_loop:
-        ; push SI
-        ; push AX
-        ; mov SI, str_arg_a
-        ; call out_asciz
-        ; mov AX, BX
-        ; call out_hex_word    
-        ; pop AX
-        ; call out_hex_word
-        ; mov SI, str_nl
-        ; call out_asciz
-        ; pop SI
-        
         cmp BX, DX
-        jne .cmp_done
+        jnz .cmp_done
         cmp AX, CX
         .cmp_done:
-        jl .div_loop_done
+        jb .div_loop_done
         sub AX, CX
         sbb BX, DX
         add DI, 1
         adc SI, 0
-    jmp .div_loop
+        jmp .div_loop
     .div_loop_done:
-
-    push SI
-    push AX
-    mov SI, str_arg_a
-    call out_asciz
-    mov AX, BX
-    call out_hex_word    
-    pop AX
-    call out_hex_word
-    mov SI, str_nl
-    call out_asciz
-    pop SI
 
     mov DX, BX
     mov CX, AX
 
     mov BX, SI
     mov AX, DI
-
-    push SI
-    push AX
-    mov SI, str_arg_a
-    call out_asciz
-    mov AX, BX
-    call out_hex_word    
-    pop AX
-    call out_hex_word
-    mov SI, str_nl
-    call out_asciz
-    pop SI
 
     pop DI
     pop SI
@@ -259,70 +208,4 @@ lnegl:
     not BX
     add AX, 1
     adc BX, 0
-ret
-
-
-str_arg_a: db "a: 0x", 0
-str_arg_b: db "b: 0x", 0
-str_arg_r: db "r: 0x", 0
-str_nl: db 10, 13, 0
-str_a_is_neg: db "a is neg", 10, 13, 0
-str_b_is_neg: db "b is neg", 10, 13, 0
-
-; Outputs char provided in `AL`
-out_char:
-    push AX
-    mov AH, 0x0E
-    int 0x10
-    pop AX
-ret
-
-; Outputs a null-terminated string whose address is passed in the `SI`
-out_asciz:
-    push AX
-    push SI
-    .next_char:
-        lodsb
-        or AL, AL
-        jz .done
-        call out_char
-        jmp .next_char
-    .done:
-    pop SI
-    pop AX
-ret
-
-; Outputs provided in `AL` number (0-f) as hexadecimal digit
-out_hex:
-    push AX
-    and AL, 0xf
-    add AL, '0'
-    cmp AL, '9'
-    jle .not_letter
-    add AL, 'A'-'9'-1
-    .not_letter:
-    call out_char
-    pop AX
-ret
-
-; Outputs provided in `AL` byte as 2 hexadecimal digits
-out_hex_byte:
-    push AX
-    push AX
-    shr AL, 4
-    call out_hex
-    pop AX
-    call out_hex
-    pop AX
-ret
-
-; Outputs provided in `AX` word as 4 hexadecimal digits
-out_hex_word:
-    push AX
-    push AX
-    shr AX, 8
-    call out_hex_byte
-    pop AX
-    call out_hex_byte
-    pop AX
 ret

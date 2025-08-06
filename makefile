@@ -33,6 +33,9 @@ mbr: ./src/main_boot_record.asm
 
 bootloader: bootloader_crt bootloader_main lib_stdio
 	@ld86 -d -o $(BUILDDIR)/bootloader.bin $(BUILDDIR)/crt0.o $(BUILDDIR)/bootloader_main.o $(BUILDDIR)/*.olib
+	@if [ "$$(stat -c %s $(BUILDDIR)/bootloader.bin)" -gt "$$((512 * $(SECOND_BOOTLOADER_SIZE_SECTORS)))" ]; then \
+	    exit 1; \
+	 fi
 
 bootloader_crt: ./src/bootloader/crt0.asm
 	@nasm ./src/bootloader/crt0.asm -f as86 -o $(BUILDDIR)/crt0.o

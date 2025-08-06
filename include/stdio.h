@@ -19,6 +19,11 @@ void puts(char *str);
  */
 void clear_screen(void);
 
-void printf(char *fmt);
+/**
+ * Formatted output
+ * @param fmt format string
+ * @param ... args
+ */
+void printf(char *fmt, ...);
 
 #endif // STDIO_H
