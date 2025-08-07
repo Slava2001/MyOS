@@ -47,7 +47,7 @@ bootloader_main: ./src/bootloader/main.c
 
 # Build libs
 
-lib_all: lib_stdio lib_math lib_disk lib_string
+lib_all: lib_stdio lib_math lib_disk lib_string lib_fat16
 
 lib_stdio: ./src/lib/stdio.c ./src/lib/stdio.asm lib_math
 	@bcc -ansi -0 -f -Iinclude -W -c ./src/lib/stdio.c -o $(BUILDDIR)/stdio.olib
@@ -66,6 +66,10 @@ lib_disk: ./src/lib/disk.c ./src/lib/disk.asm
 lib_string: ./src/lib/string.c
 	@bcc -ansi -0 -f -Iinclude -W -c ./src/lib/string.c -o $(BUILDDIR)/string.olib
 	@echo "[build] Compiling the lib_string: OK"
+
+lib_fat16: ./src/lib/fat16.c
+	@bcc -ansi -0 -f -Iinclude -W -c ./src/lib/fat16.c -o $(BUILDDIR)/fat16.olib
+	@echo "[build] Compiling the lib_fat16: OK"
 
 # Create image
 

@@ -8,7 +8,6 @@ void puts(str) char *str; {
     }
 }
 
-
 typedef struct FmtDesc {
     char flag;
     int width;
@@ -43,12 +42,12 @@ void printf(fmt) char *fmt; {
                     putc('%');
                 break;
                 case 'c':
-                    putc(*arg_ptr);
+                    putc((char)*arg_ptr);
                     arg_ptr += sizeof('\0');
                 break;
                 case 's':
-                    puts(*arg_ptr);
-                    arg_ptr += sizeof(char*);
+                    puts(*(char **)arg_ptr);
+                    arg_ptr += sizeof(char *);
                 break;
                 case 'd':
                 case 'u':

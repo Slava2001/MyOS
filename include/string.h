@@ -33,4 +33,13 @@ char* ultoa(ulong val, char *buff, int len, int base);
  * @return true if ch is digit, else false
  */
 int isdigit(char ch);
+
+/**
+ * Copy len bytes from src to dst
+ * @param[out] dst destination address
+ * @param[in] src source addres
+ * @param len bytes count
+ */
+void memcpy(void *dst, void *src, uint len);
+
 #endif // STRING_H

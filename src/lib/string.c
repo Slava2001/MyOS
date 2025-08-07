@@ -36,3 +36,10 @@ char* ultoa(val, buff, len, base) ulong val; char *buff; int len, base; {
 int isdigit(ch) char ch; {
     return ch >= '0' && ch <= '9';
 }
+
+void memcpy(dst, src, len) void *src, *dst; uint len; {
+    uint i;
+    for (i = 0; i < len; i++) {
+        ((byte *)dst)[i] = ((byte *)src)[i];
+    }
+}

@@ -3,6 +3,11 @@ section .text
 global _get_disk_info
 global _load_sectors_from_disk
 global _save_sectors_to_disk
+global _get_current_code_segment
+
+_get_current_code_segment:
+    mov AX, CS
+ret
 
 ; word disk_num, &cylinders, &heads, &sectors
 _get_disk_info:
@@ -44,7 +49,7 @@ _get_disk_info:
 ret
 
 ; word disk_num, word cylinder, word head,
-; word sector, word sector_count, dword dst
+; word sector, word sector_count, word dst_sector, word dst_offset
 _load_sectors_from_disk:
     push BP
     mov BP,SP
@@ -60,10 +65,8 @@ _load_sectors_from_disk:
     mov CH, AH
     shl AL, 6
     or CL, AL
-    mov BX, [BP + 16] ; dst addr segment
-    shl BX, 12
-    mov ES, BX
-    mov BX, [BP + 14] ; dst addr offset
+    mov ES, [BP + 14] ; dst addr segment
+    mov BX, [BP + 16] ; dst addr offset
     mov AL, [BP + 12] ; sector count
     mov AH, 0x02
 
@@ -82,7 +85,7 @@ _load_sectors_from_disk:
 ret
 
 ; word disk_num, word cylinder, word head,
-; word sector, word sector_count, dword src
+; word sector, word sector_count, word dst_sector, word dst_offset
 _save_sectors_to_disk:
     mov AX, -1
 ret
