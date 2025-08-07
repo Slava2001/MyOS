@@ -10,7 +10,7 @@
 
 int bootloader_main() {
     DiskCtx disk;
-    int rc, i;
+    int rc, i, s;
     char *ptr;
 
     clear_screen();
@@ -22,20 +22,28 @@ int bootloader_main() {
     printf("Disk info:\n\r    disk_num: %x\n\r    cylinders: %d\n\r    "
            "heads: %d\n\r    sectors: %d\n\r",
            disk.disk_num, disk.cylinders, disk.heads, disk.sectors);
-    rc = disk_load(&disk, (ulong)32766,  BOOTLOADER_ADDR + 0x1400, 1);
-    if (rc != 0) {
-        printf("Failed to load sector: error: %d\n\r", rc - 1);
-        while (1);
-    }
-    puts("Load sector: OK\n\r");
-
-    ptr = 0x1400;
-    for (rc = 0; rc < 3; rc++) {
-        for (i = 0; i < 16; i++) {
-            printf("%x ", (int)*(char *)ptr);
-            ptr = ptr + 1;
+    
+    for (s = 0; s < 0x8000; s++) {   
+        rc = disk_load(&disk, (ulong)s,  BOOTLOADER_ADDR + 0x1400, 1);
+        if (rc != 0) {
+            printf("Failed to load sector: error: %d\n\r", rc - 1);
+            while (1);
         }
-        puts("\n\r");
+        //puts("Load sector: OK\n\r");
+        
+        ptr = 0x1400;
+        for (rc = 0; rc < 1; rc++) {
+            for (i = 0; i < 16; i++) {
+                printf("%02x ", (int)*(char *)ptr);
+                ptr = ptr + 1;
+            }
+            puts("\n\r");
+        }
+        for (rc = 0; rc < 10; rc++) {
+            #asm
+            hlt
+            #endasm
+        }
     }
 
     while(1) {}
