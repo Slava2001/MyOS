@@ -1,4 +1,6 @@
 #include "stdio.h"
+#include "types.h"
+#include "string.h"
 
 void puts(str) char *str; {
     while (*str) {
@@ -6,57 +8,37 @@ void puts(str) char *str; {
     }
 }
 
-#define push_char(ch) \
-    if (buff > end_ptr) { buff--; *buff = ch; } else { return buff; }
+
+typedef struct FmtDesc {
+    char flag;
+    int width;
+    int precision;
+    char type_size;
+    char type;
+} FmtDesc;
+
 /**
- * Print integer in provided buffer
- * @param val value to print
- * @param base base
- * @param buff buffer to store printed value
- * @param len buff len
- * @return pointer to null-terminated string, witch contain val 
- *         representation in given base
+ * Parse fmt
+ * @param[in] buff buffer with format
+ * @param[out] desc parsed description
+ * @return pointer to element in buff, after parsed fmt
  */
-#define print_func(func_name, val_type)    \
-char* func_name(val, base, buff, len)      \
-val_type val; int len, base; char *buff; { \
-    int sign;                              \
-    char tmp;                              \
-    char *end_ptr;                         \
-    end_ptr = buff;                        \
-    sign = val < 0;                        \
-    if (sign) {                            \
-        val = -val;                        \
-    }                                      \
-    buff = buff + len - 1;                 \
-    push_char(0);                          \
-    do {                                   \
-        tmp = '0' + val % base;            \
-        if (tmp > '9') {                   \
-            tmp += 'A' - '9' - 1;          \
-        }                                  \
-        push_char(tmp);                    \
-        val = val / base;                  \
-    } while (val > 0);                     \
-    if (sign) {                            \
-        push_char('-');                    \
-    }                                      \
-    return buff;                           \
-}
-print_func(print_lint, long int)
-print_func(print_ulint, unsigned long)
-#undef push_char
+char* parse_fmt(char *buff, FmtDesc *desc);
 
 #define TMP_BUFF_SIZE 64
 void printf(fmt) char *fmt; {
-    char *arg_ptr;
-    char tmp_buff[TMP_BUFF_SIZE];
+    char *cursor, *arg_ptr, tmp_buff[TMP_BUFF_SIZE], padding_char;
+    FmtDesc fmt_desc;
+    int base, padding;
+
     arg_ptr = (char *)(&fmt + 1);
 
     while (*fmt) {
         if (*fmt == '%') {
             fmt++;
-            switch(*fmt++) {
+            fmt = parse_fmt(fmt, &fmt_desc);
+
+            switch (fmt_desc.type) {
                 case '%':
                     putc('%');
                 break;
@@ -69,47 +51,71 @@ void printf(fmt) char *fmt; {
                     arg_ptr += sizeof(char*);
                 break;
                 case 'd':
-                    puts(print_lint((long)*(int *)arg_ptr, 10, tmp_buff, 
-                                    TMP_BUFF_SIZE));
-                    arg_ptr += sizeof(int);
-                break;
                 case 'u':
-                    puts(print_ulint((unsigned long)(*(unsigned int *)arg_ptr), 
-                                     10, tmp_buff, TMP_BUFF_SIZE));
-                    arg_ptr += sizeof(unsigned int);
-                break;
                 case 'x':
-                    puts(print_ulint((unsigned long)(*(unsigned int *)arg_ptr), 
-                                     16, tmp_buff, TMP_BUFF_SIZE));
-                    arg_ptr += sizeof(unsigned int);
-                break;
                 case 'b':
-                    puts(print_ulint((unsigned long)(*(unsigned int *)arg_ptr), 
-                                     2, tmp_buff, TMP_BUFF_SIZE));
-                    arg_ptr += sizeof(unsigned int);
-                break;
-                case 'l':
-                    switch (*fmt++) {
-                    case 'd':
-                        puts(print_lint(*(long *)arg_ptr, 10, tmp_buff, 
-                                        TMP_BUFF_SIZE));
-                        arg_ptr += sizeof(long);
-                    break;
-                    case 'u':
-                        puts(print_ulint(*(unsigned long *)arg_ptr, 10, 
-                                         tmp_buff, TMP_BUFF_SIZE));
-                        arg_ptr += sizeof(unsigned long);
-                    break;
-                    case 'x':
-                        puts(print_ulint(*(unsigned long *)arg_ptr, 16, 
-                                         tmp_buff, TMP_BUFF_SIZE));
-                        arg_ptr += sizeof(unsigned long);
-                    break;
-                    case 'b':
-                        puts(print_ulint(*(unsigned long *)arg_ptr, 2, 
-                                         tmp_buff, TMP_BUFF_SIZE));
-                        arg_ptr += sizeof(unsigned long);
-                    break;
+                    switch (fmt_desc.type) {
+                        case 'd':
+                        case 'u':
+                            base = 10;
+                        break;
+                        case 'x':
+                            base = 16;
+                        break;
+                        case 'b':
+                            base = 2;
+                        break;
+                    }
+                    if (fmt_desc.type == 'd') {
+                        if (fmt_desc.type_size == 'l') {
+                            cursor = ltoa(*(long *)arg_ptr, tmp_buff, TMP_BUFF_SIZE, base);
+                            arg_ptr += sizeof(long);
+                        } else {
+                            cursor = ltoa((long)*(int *)arg_ptr, tmp_buff, TMP_BUFF_SIZE, base);
+                            arg_ptr += sizeof(int);
+                        }
+                    } else {
+                        if (fmt_desc.type_size == 'l') {
+                            cursor = ultoa(*(ulong *)arg_ptr, tmp_buff, TMP_BUFF_SIZE, base);
+                            arg_ptr += sizeof(ulong);
+                        } else {
+                            cursor = ultoa((ulong)*(uint *)arg_ptr, tmp_buff, TMP_BUFF_SIZE, base);
+                            arg_ptr += sizeof(uint);
+                        }
+                    }
+
+                    if (fmt_desc.flag == '+' &&
+                        (fmt_desc.type == 'd' || fmt_desc.type == 'u') && *cursor != '-') {
+                        cursor--;
+                        *cursor = '+';
+                    }
+
+                    if (fmt_desc.flag == '#' && (fmt_desc.type == 'x' || fmt_desc.type == 'b')) {
+                        cursor--;
+                        *cursor = fmt_desc.type;
+                        cursor--;
+                        *cursor = '0';
+                    }
+
+                    padding = 0;
+                    if (fmt_desc.width) {
+                        padding = fmt_desc.width - (TMP_BUFF_SIZE - (int)(cursor - tmp_buff)) + 1;
+                    }
+
+                    padding_char = ' ';
+                    if (fmt_desc.flag == '0') {
+                        padding_char = '0';
+                    }
+
+                    if (fmt_desc.flag != '-') {
+                        for (;padding>0; padding--) {
+                            putc(padding_char);
+                        }
+                    }
+
+                    puts(cursor);
+                    for (;padding > 0; padding--) {
+                        putc(padding_char);
                     }
                 break;
             }
@@ -117,4 +123,75 @@ void printf(fmt) char *fmt; {
             putc(*fmt++);
         }
     }
+}
+
+char* parse_fmt(buff, desc) char *buff; FmtDesc *desc; {
+    desc->flag = 0;
+    desc->width = 0;
+    desc->precision = 0;
+    desc->type_size = 0;
+    desc->type = 0;
+
+    switch (*buff) {
+    case '-':
+    case '+':
+    case ' ':
+    case '0':
+    case '#':
+        desc->flag = *buff;
+        buff++;
+        if (!*buff) {
+            return buff;
+        }
+    break;
+    }
+
+    while (isdigit(*buff)) {
+        desc->width = desc->width * 10;
+        desc->width += *buff - '0';
+        buff++;
+        if (!*buff) {
+            return buff;
+        }
+    }
+
+    if (*buff == '.') {
+        buff++;
+        if (!*buff) {
+            return buff;
+        }
+        while (isdigit(*buff)) {
+            desc->precision = desc->precision * 10;
+            desc->precision += *buff - '0';
+            buff++;
+            if (!*buff) {
+                return buff;
+            }
+        }
+    }
+
+    if (*buff == 'l') {
+        desc->type_size = 'l';
+        buff++;
+        if (!*buff) {
+            return buff;
+        }
+    }
+
+    switch (*buff) {
+    case '%':
+    case 'c':
+    case 's':
+    case 'd':
+    case 'u':
+    case 'x':
+    case 'b':
+        desc->type = *buff;
+        buff++;
+        if (!*buff) {
+            return buff;
+        }
+    break;
+    }
+    return buff;
 }
