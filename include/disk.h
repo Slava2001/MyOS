@@ -11,6 +11,12 @@ typedef struct DiskCtx {
 } DiskCtx;
 
 /**
+ * Set local addres flag (most signed bit)
+ * If flag is set addres is relativeto current segment, else addres is absolute
+ */
+#define Local(addr) ((ulong)(0x80000000 + (ulong)((uint)(addr))))
+
+/**
  * Init context for work with disk
  * @param[out] ctx context to init
  * @param disk_num disk number
@@ -22,34 +28,22 @@ int disk_init(DiskCtx *ctx, int disk_num);
  * Read sectors form disk to RAM
  * @param[in] ctx disk context
  * @param src_sector first sector to load
- * @param dst RAM addres (it is absolute addres of RAM (not segment offset))
+ * @param dst RAM addres. If the high bit is set, the address is considered
+ *            relative to the current segment, otherwise absolute
  * @param sector_count sector count to load
  * @return bios int 0x13 error code + 1 on Nok, 0 on Ok
  */
-int disk_load_g(DiskCtx *ctx, ulong src_sector, ulong dst, uint sector_count);
+int disk_load(DiskCtx *ctx, ulong src_sector, ulong dst, uint sector_count);
 
 /**
  * Read sectors form disk to RAM
  * @param[in] ctx disk context
  * @param src_sector first sector to load
- * @param dst RAM addres (offset, relative current segment)
+ * @param dst RAM addres. If the high bit is set, the address is considered
+ *            relative to the current segment, otherwise absolute
  * @param sector_count sector count to load
  * @return bios int 0x13 error code + 1 on Nok, 0 on Ok
  */
 int disk_load(DiskCtx *ctx, ulong src_sector, uint dst, uint sector_count);
-
-// #define Local(addr) ((ulong)(0xffff0000 + (ulong)((uint)(addr))))
-
-// disk_load(&disk, (ulong)100, Local(0x1234), (uint)1);
-
-/**
- * Write sectors to disk from RAM
- * @param[in] ctx disk context
- * @param src RAM addres (it is absolute addres of RAM (not segment offset))
- * @param dst_sector start sector to writing
- * @param sector_count sector count to write
- * @return bios int 0x13 error code + 1 on Nok, 0 on Ok
- */
-int disk_save_g(DiskCtx *ctx, ulong src, ulong dst_sector, uint sector_count);
 
 #endif // DISK_H

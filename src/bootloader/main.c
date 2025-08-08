@@ -34,7 +34,6 @@ int bootloader_main() {
         printf("   %s %s %08b\n\r", files[i].name, files[i].ext, (uint)files[i].attribute);
     }
 
-
     // logi(("Fat info:\n\r"
     //      "  os_name: %s\n\r"
     //      "  bytes_per_sector: %04x\n\r"

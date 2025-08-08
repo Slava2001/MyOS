@@ -4,7 +4,6 @@
 
 #define FAT16_SIGNATURE 0x29
 
-
 void parse_file_desc(buff, desc) void *buff; Fat16FileDesc *desc; {
     uint first_cluster_h, first_cluster_l;
     memcpy((void *)desc->name,                      (void *)(((byte *)buff) + 0x00), 8 );
@@ -63,7 +62,7 @@ void *buff; int len; DiskCtx *disk; Fat16Ctx *ctx; {
     ctx->buff_addr = buff;
     ctx->disk = disk;
 
-    rc = disk_load(ctx->disk, (ulong)0, ctx->buff_addr, (uint)1);
+    rc = disk_load(ctx->disk, (ulong)0, Local(ctx->buff_addr), (uint)1);
     reci(rc, ("Failed to load Fat header: %d", rc));
 
     parse_fat_header((void *)ctx->buff_addr, &ctx->header);
@@ -76,19 +75,19 @@ void *buff; int len; DiskCtx *disk; Fat16Ctx *ctx; {
 }
 
 int fat16_list_root(Fat16Ctx *ctx, Fat16FileDesc *files, int max_files_count) {
-    uint files_count, read_files, i;
+    uint desc_count, read_files, i;
     ulong sector;
     int rc, saved_files;
     Fat16FileDesc tmp;
 
     sector = ctx->root_dir_sector;
-    files_count = ctx->header.descriptions_count_in_root;
+    desc_count = ctx->header.descriptions_count_in_root;
     saved_files = 0;
-    for (read_files = 0; read_files < files_count;) {
-        rc = disk_load(ctx->disk, sector, ctx->buff_addr, (uint)1);
+    for (read_files = 0; read_files < desc_count;) {
+        rc = disk_load(ctx->disk, sector, Local(ctx->buff_addr), (uint)1);
         reci(rc, ("Failed to load root dir sector: %d", rc));
         for (i = 0;
-             i < 16 && read_files < files_count && saved_files < max_files_count;
+             i < 16 && read_files < desc_count && saved_files < max_files_count;
              i++, read_files++)
         {
             parse_file_desc((void *)(ctx->buff_addr + i * 32), &tmp);
@@ -106,6 +105,3 @@ int fat16_load_file(Fat16Ctx *ctx, char *path, uint dts) {
     return -1;
 }
 
-int fat16_load_file_g(Fat16Ctx *ctx, char *path, ulong dst) {
-    return -1;
-}

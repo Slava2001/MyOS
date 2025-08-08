@@ -26,12 +26,15 @@ int disk_init(ctx, disk_num) DiskCtx *ctx; int disk_num; {
     return get_disk_info(disk_num, &ctx->cylinders, &ctx->heads, &ctx->sectors);
 }
 
-int disk_load_g(ctx, src_sector, dst, sector_count)
+int disk_load(ctx, src_sector, dst, sector_count)
 DiskCtx *ctx; ulong src_sector, dst; uint sector_count; {
     CHS chs;
     uint segment, offset;
     calc_chs(ctx, src_sector, &chs);
     segment = dst >> 16;
+    if (segment & 0x8000) {
+        segment = get_current_code_segment();
+    }
     offset = (uint)dst;
     return load_sectors_from_disk(
         ctx->disk_num, chs.cylinder,
@@ -39,25 +42,15 @@ DiskCtx *ctx; ulong src_sector, dst; uint sector_count; {
     );
 }
 
-int disk_load(ctx, src_sector, dst, sector_count)
-DiskCtx *ctx; ulong src_sector; uint dst, sector_count; {
-    CHS chs;
-    uint segment, offset;
-    calc_chs(ctx, src_sector, &chs);
-    segment = get_current_code_segment();
-    offset = dst;
-    return load_sectors_from_disk(
-        ctx->disk_num, chs.cylinder,
-        chs.head, chs.sector, sector_count, segment, offset
-    );
-}
-
-int disk_save_g(ctx, src, dst_sector, sector_count)
+int disk_save(ctx, src, dst_sector, sector_count)
 DiskCtx *ctx; ulong src, dst_sector; uint sector_count; {
     CHS chs;
     uint segment, offset;
     calc_chs(ctx, dst_sector, &chs);
     segment = src >> 16;
+    if (segment & 0x8000) {
+        segment = get_current_code_segment();
+    }
     offset = (uint)src;
     return save_sectors_to_disk(
         ctx->disk_num, chs.cylinder,

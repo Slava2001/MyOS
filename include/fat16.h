@@ -61,7 +61,6 @@ int fat16_init(void *buff, int len, DiskCtx *disk, Fat16Ctx *ctx);
 
 int fat16_list_root(Fat16Ctx *ctx, Fat16FileDesc *files, uint max_files_count);
 int fat16_list(Fat16Ctx *ctx, Fat16FileDesc *dir, Fat16FileDesc *files, uint max_files_count);
-int fat16_load_file(Fat16Ctx *ctx, Fat16FileDesc *dir, uint dts);
-int fat16_load_file_g(Fat16Ctx *ctx, Fat16FileDesc *dir, ulong dst);
+int fat16_load_file(Fat16Ctx *ctx, Fat16FileDesc *dir, ulong dst);
 
 #endif // FAT16_H
