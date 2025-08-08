@@ -27,12 +27,27 @@ typedef struct Fat16Header {
     char file_system_type[8 + 1 /*for terminated null*/];
 } Fat16Header;
 
+typedef struct Fat16FileDesc {
+    char name[8 + 1 /*for terminated null*/];
+    char ext[3 + 1 /*for terminated null*/];
+    byte attribute;
+    byte reserved;
+    byte create_time_centiseconds;
+    uint create_time;
+    uint create_date;
+    uint last_read_date;
+    ulong first_cluster;
+    uint last_write_time;
+    uint last_write_date;
+    ulong file_size_bytes;
+} Fat16FileDesc;
+
 typedef struct Fat16Ctx {
     uint buff_addr;
     Fat16Header header;
     DiskCtx *disk;
+    ulong root_dir_sector;
 } Fat16Ctx;
-
 
 /**
  * Init Fat16 context
@@ -43,5 +58,10 @@ typedef struct Fat16Ctx {
  * @return -1 on error, else 0
  */
 int fat16_init(void *buff, int len, DiskCtx *disk, Fat16Ctx *ctx);
+
+int fat16_list_root(Fat16Ctx *ctx, Fat16FileDesc *files, uint max_files_count);
+int fat16_list(Fat16Ctx *ctx, Fat16FileDesc *dir, Fat16FileDesc *files, uint max_files_count);
+int fat16_load_file(Fat16Ctx *ctx, Fat16FileDesc *dir, uint dts);
+int fat16_load_file_g(Fat16Ctx *ctx, Fat16FileDesc *dir, ulong dst);
 
 #endif // FAT16_H

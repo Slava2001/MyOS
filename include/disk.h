@@ -38,6 +38,10 @@ int disk_load_g(DiskCtx *ctx, ulong src_sector, ulong dst, uint sector_count);
  */
 int disk_load(DiskCtx *ctx, ulong src_sector, uint dst, uint sector_count);
 
+// #define Local(addr) ((ulong)(0xffff0000 + (ulong)((uint)(addr))))
+
+// disk_load(&disk, (ulong)100, Local(0x1234), (uint)1);
+
 /**
  * Write sectors to disk from RAM
  * @param[in] ctx disk context

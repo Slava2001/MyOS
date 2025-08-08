@@ -58,7 +58,7 @@ hold:
     hlt
     jmp hold
 
-SECOND_BOOTLOADER_SIZE_SECTORS equ 10
+SECOND_BOOTLOADER_SIZE_SECTORS equ 20
 ; Load second bootloader from boot disk, witch number provided in `DL`
 ; Bootloader must start in second sector an has length 10 sectors
 load_second_bootloader:

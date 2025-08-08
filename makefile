@@ -3,7 +3,7 @@
 BUILDDIR = ./build
 IMG_NAME = ./os.img
 IMG_SIZE_MB = 16 # Range: 16Mb - 2G
-SECOND_BOOTLOADER_SIZE_SECTORS = 10
+SECOND_BOOTLOADER_SIZE_SECTORS = 20
 
 default: help
 
@@ -78,13 +78,23 @@ img:
 	@echo "[img] Remove old image: OK"
 	@dd if=/dev/zero of=$(IMG_NAME) bs=1MiB count=$(IMG_SIZE_MB) > /dev/null 2>&1
 	@echo "[img] Creating empty disk image: OK"
-	@mkfs.fat -F 16 -R $(SECOND_BOOTLOADER_SIZE_SECTORS) $(IMG_NAME) > /dev/null
+	@mkfs.fat -n "LUNAR OS" -F 16 -R $(SECOND_BOOTLOADER_SIZE_SECTORS) $(IMG_NAME) > /dev/null
 	@echo "[img] Creating fat16 file system: OK"
 	@dd if=$(BUILDDIR)/mbr.bin of=$(IMG_NAME) bs=1 count=3 conv=notrunc iflag=skip_bytes,count_bytes > /dev/null 2>&1
 	@dd if=$(BUILDDIR)/mbr.bin of=$(IMG_NAME) skip=62 seek=62 bs=1 conv=notrunc iflag=skip_bytes,count_bytes > /dev/null 2>&1
 	@echo "[img] Writing MBR: OK"
 	@dd if=$(BUILDDIR)/bootloader.bin of=$(IMG_NAME) bs=512 seek=1 conv=notrunc iflag=skip_bytes,count_bytes > /dev/null 2>&1
 	@echo "[img] Writing second bootloader: OK"
+	@temp_dir=$$(mktemp -d);                                        \
+	 sudo mount -t msdos $(IMG_NAME) $$temp_dir -o loop;            \
+	 sudo bash -c "echo -n \"0123456789\" > $$temp_dir/file1.txt;"; \
+	 sudo touch $$temp_dir/file2.txt;                               \
+	 sudo touch $$temp_dir/file3.txt;                               \
+	 sudo mkdir $$temp_dir/dir1;                                    \
+	 sudo mkdir $$temp_dir/dir2;                                    \
+	 sudo mkdir $$temp_dir/dir3;                                    \
+	 sudo umount $(IMG_NAME);
+	@echo "[img] Writing files: OK"
 	@echo "[img] Creating disk image: OK"
 
 # Run qemu
