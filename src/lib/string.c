@@ -43,3 +43,28 @@ void memcpy(dst, src, len) void *src, *dst; uint len; {
         ((byte *)dst)[i] = ((byte *)src)[i];
     }
 }
+
+void trim_trailing_spaces(str) char *str; {
+    char *cursor;
+    cursor = str;
+    if (!*cursor) {
+        return;
+    }
+    while(*cursor) {
+        cursor++;
+    }
+    do {
+        cursor--;
+    } while(*cursor == ' ' && cursor >=  str);
+    *(++cursor) = 0;
+}
+
+uint strlen(str) char *str; {
+    uint rc;
+    rc = 0;
+    while(*str) {
+        rc++;
+        str++;
+    }
+    return rc;
+}

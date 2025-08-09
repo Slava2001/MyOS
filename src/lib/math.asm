@@ -12,6 +12,7 @@ global ldivul
 global lmodul
 global lmodl
 global ldivl
+global lmulul
 
 imod:
     cwd
@@ -146,8 +147,8 @@ lmodul:
     push DX
     push CX
     push SI
-    mov DX, [di + 2]
-    mov CX, [di]
+    mov DX, [DI + 2]
+    mov CX, [DI]
     call __u32_divmod
     mov BX, DX
     mov AX, CX
@@ -208,4 +209,34 @@ lnegl:
     not BX
     add AX, 1
     adc BX, 0
+ret
+
+lmulul:
+    push DX
+    push CX
+    push SI
+
+    mov SI, AX
+    xor CX, CX
+
+    ; a_lo * b_hi
+    mov AX, SI
+    mul word [DI + 2]
+    mov CX, AX
+
+    ; a_hi * b_lo
+    mov AX, BX
+    mul word [DI]
+    add CX, AX
+
+    ; a_lo * b_lo
+    mov AX, SI
+    mul word [DI]
+    add CX, DX
+
+    mov BX, CX
+
+    pop SI
+    pop CX
+    pop DX
 ret

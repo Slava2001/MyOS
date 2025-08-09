@@ -27,7 +27,7 @@ int disk_init(ctx, disk_num) DiskCtx *ctx; int disk_num; {
 }
 
 int disk_load(ctx, src_sector, dst, sector_count)
-DiskCtx *ctx; ulong src_sector, dst; uint sector_count; {
+DiskCtx *ctx; ulong src_sector; RamAddr dst; uint sector_count; {
     CHS chs;
     uint segment, offset;
     calc_chs(ctx, src_sector, &chs);
@@ -43,7 +43,7 @@ DiskCtx *ctx; ulong src_sector, dst; uint sector_count; {
 }
 
 int disk_save(ctx, src, dst_sector, sector_count)
-DiskCtx *ctx; ulong src, dst_sector; uint sector_count; {
+DiskCtx *ctx; RamAddr src; ulong dst_sector; uint sector_count; {
     CHS chs;
     uint segment, offset;
     calc_chs(ctx, dst_sector, &chs);

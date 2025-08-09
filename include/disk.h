@@ -16,6 +16,8 @@ typedef struct DiskCtx {
  */
 #define Local(addr) ((ulong)(0x80000000 + (ulong)((uint)(addr))))
 
+typedef ulong RamAddr;
+
 /**
  * Init context for work with disk
  * @param[out] ctx context to init
@@ -33,17 +35,17 @@ int disk_init(DiskCtx *ctx, int disk_num);
  * @param sector_count sector count to load
  * @return bios int 0x13 error code + 1 on Nok, 0 on Ok
  */
-int disk_load(DiskCtx *ctx, ulong src_sector, ulong dst, uint sector_count);
+int disk_load(DiskCtx *ctx, ulong src_sector, RamAddr dst, uint sector_count);
 
 /**
- * Read sectors form disk to RAM
+ * Save sectors form RAM to disk
  * @param[in] ctx disk context
- * @param src_sector first sector to load
- * @param dst RAM addres. If the high bit is set, the address is considered
+ * @param src RAM addres. If the high bit is set, the address is considered
  *            relative to the current segment, otherwise absolute
- * @param sector_count sector count to load
+ * @param dst_sector first destination sector
+ * @param sector_count sector count to save
  * @return bios int 0x13 error code + 1 on Nok, 0 on Ok
  */
-int disk_load(DiskCtx *ctx, ulong src_sector, uint dst, uint sector_count);
+int disk_save(DiskCtx *ctx, RamAddr src_sector, uint dst, uint sector_count);
 
 #endif // DISK_H

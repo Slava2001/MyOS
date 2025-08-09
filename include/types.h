@@ -4,5 +4,8 @@
 typedef unsigned long ulong;
 typedef unsigned int uint;
 typedef unsigned char byte;
+typedef unsigned char bool;
+#define false 0
+#define true !(false)
 
 #endif // TYPES_H

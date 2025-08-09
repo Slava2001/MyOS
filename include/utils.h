@@ -3,7 +3,7 @@
 
 #include "stdio.h"
 
-#if 1
+#if 0
 #define log(lvl, msg) {printf(__FILE__":%d ["#lvl"]: ", __LINE__); printf msg; puts("\n\r");}
 #else
 #define log(lvl, msg) {puts("["#lvl"]: "); printf msg; puts("\n\r");}

@@ -3,41 +3,60 @@
 #include "utils.h"
 
 #define FAT16_SIGNATURE 0x29
+#define FILE_DESC_SIZE_BYTE 32
+#define SECTOR_SIZE_BYTE 512
+#define FILE_DESC_PER_SECTOR ((SECTOR_SIZE_BYTE)/(FILE_DESC_SIZE_BYTE))
+#define DELETED_FILE_NAME_FIRST_CHAR 0x5e
 
-void parse_file_desc(buff, desc) void *buff; Fat16FileDesc *desc; {
-    uint first_cluster_h, first_cluster_l;
+#define parse_file_desc(buff, desc) _parse_file_desc((void *)(buff), (Fat16FileDesc *)(desc))
+void _parse_file_desc(void *buff, Fat16FileDesc *desc);
+
+#define parse_fat_header(buff, hdr) _parse_fat_header((void *)(buff), (Fat16Header *)(hdr))
+void _parse_fat_header(void *buff, Fat16Header *hdr);
+
+#define list_root(ctx, dir, next_sec_f, desc_count, files, max_files_count) \
+    (int)_list_root((Fat16Ctx *)(ctx), (Fat16FileDesc *)(dir), next_sec_f, (uint)(desc_count), \
+                    (Fat16FileDesc *)(files), (int)(max_files_count));
+int _list_root(Fat16Ctx *ctx, Fat16FileDesc *dir, int (*next_sec_f)(), uint desc_count,
+               Fat16FileDesc *files, int max_files_count);
+
+#define get_next_cluster(ctx, current, next) \
+        (int)_get_next_cluster((Fat16Ctx *)(ctx), (uint)(current), (uint)(next))
+int _get_next_cluster(Fat16Ctx *ctx, uint current, uint next);
+
+void _parse_file_desc(buff, desc) void *buff; Fat16FileDesc *desc; {
     memcpy((void *)desc->name,                      (void *)(((byte *)buff) + 0x00), 8 );
     memcpy((void *)desc->ext,                       (void *)(((byte *)buff) + 0x08), 3 );
     memcpy((void *)&desc->attribute,                (void *)(((byte *)buff) + 0x0B), 1 );
-    memcpy((void *)&desc->reserved,                 (void *)(((byte *)buff) + 0x0C), 1 );
+    // memcpy((void *)&reserved,                    (void *)(((byte *)buff) + 0x0C), 1 );
     memcpy((void *)&desc->create_time_centiseconds, (void *)(((byte *)buff) + 0x0D), 1 );
     memcpy((void *)&desc->create_time,              (void *)(((byte *)buff) + 0x0E), 2 );
     memcpy((void *)&desc->create_date,              (void *)(((byte *)buff) + 0x10), 2 );
     memcpy((void *)&desc->last_read_date,           (void *)(((byte *)buff) + 0x12), 2 );
-    memcpy((void *)&first_cluster_h,                (void *)(((byte *)buff) + 0x14), 2 );
+    // memcpy((void *)&reserved,                    (void *)(((byte *)buff) + 0x14), 2 );
     memcpy((void *)&desc->last_write_time,          (void *)(((byte *)buff) + 0x16), 2 );
     memcpy((void *)&desc->last_write_date,          (void *)(((byte *)buff) + 0x18), 2 );
-    memcpy((void *)&first_cluster_l,                (void *)(((byte *)buff) + 0x1A), 2 );
+    memcpy((void *)&desc->first_cluster,            (void *)(((byte *)buff) + 0x1A), 2 );
     memcpy((void *)&desc->file_size_bytes,          (void *)(((byte *)buff) + 0x1C), 4 );
 
-    desc->first_cluster = (ulong)first_cluster_h;
-    desc->first_cluster = desc->first_cluster << 16;
-    desc->first_cluster += first_cluster_l;
     desc->name[8] = 0;
+    trim_trailing_spaces(desc->name);
     desc->ext[3] = 0;
+    trim_trailing_spaces(desc->ext);
+    desc->inner.is_root = false;
 }
 
-void parse_fat_header(buff, hdr) void *buff; Fat16Header *hdr; {
+void _parse_fat_header(buff, hdr) void *buff; Fat16Header *hdr; {
     memcpy((void *)hdr->jmp_on_bootloader,           (void *)(((byte *)buff) + 0x00), 3 );
     memcpy((void *)hdr->os_name,                     (void *)(((byte *)buff) + 0x03), 8 );
     memcpy((void *)&hdr->bytes_per_sector,           (void *)(((byte *)buff) + 0x0B), 2 );
     memcpy((void *)&hdr->sectors_per_cluster,        (void *)(((byte *)buff) + 0x0D), 1 );
-    memcpy((void *)&hdr->system_area_size,           (void *)(((byte *)buff) + 0x0E), 2 );
+    memcpy((void *)&hdr->system_area_size_sectors,   (void *)(((byte *)buff) + 0x0E), 2 );
     memcpy((void *)&hdr->fat_table_count,            (void *)(((byte *)buff) + 0x10), 1 );
     memcpy((void *)&hdr->descriptions_count_in_root, (void *)(((byte *)buff) + 0x11), 2 );
     memcpy((void *)&hdr->total_sectors_count,        (void *)(((byte *)buff) + 0x13), 2 );
     memcpy((void *)&hdr->device_type,                (void *)(((byte *)buff) + 0x15), 1 );
-    memcpy((void *)&hdr->fat_table_size,             (void *)(((byte *)buff) + 0x16), 2 );
+    memcpy((void *)&hdr->fat_table_size_sectors,     (void *)(((byte *)buff) + 0x16), 2 );
     memcpy((void *)&hdr->sectors_per_track,          (void *)(((byte *)buff) + 0x18), 2 );
     memcpy((void *)&hdr->head_count,                 (void *)(((byte *)buff) + 0x1A), 2 );
     memcpy((void *)&hdr->absolute_sector_number,     (void *)(((byte *)buff) + 0x1C), 4 );
@@ -58,7 +77,7 @@ void *buff; int len; DiskCtx *disk; Fat16Ctx *ctx; {
     int rc;
     Fat16FileDesc fd;
 
-    reci(len != 512, ("Wrong buff len"));
+    reci(len != SECTOR_SIZE_BYTE, ("Wrong buff len, expected %u", (uint)SECTOR_SIZE_BYTE));
     ctx->buff_addr = buff;
     ctx->disk = disk;
 
@@ -69,29 +88,94 @@ void *buff; int len; DiskCtx *disk; Fat16Ctx *ctx; {
     reci(ctx->header.signature != FAT16_SIGNATURE,
          ("Invalid fat signature: 0x%02x", (uint)ctx->header.signature));
 
-    ctx->root_dir_sector = ctx->header.system_area_size +
-                           ctx->header.fat_table_count*ctx->header.fat_table_size;
+    ctx->root_dir_sector = ctx->header.system_area_size_sectors +
+                           ctx->header.fat_table_count*ctx->header.fat_table_size_sectors;
     return 0;
 }
 
-int fat16_list_root(Fat16Ctx *ctx, Fat16FileDesc *files, int max_files_count) {
-    uint desc_count, read_files, i;
+int fat16_get_root(ctx, root_dir) Fat16Ctx *ctx; Fat16FileDesc *root_dir; {
+    memcpy((void *)root_dir->name, "root", 5);
+    root_dir->ext[0] = 0;
+    root_dir->attribute = 16;
+    root_dir->create_time_centiseconds = 0;
+    root_dir->create_time = 0;
+    root_dir->create_date = ctx->header.disk_create_date;
+    root_dir->last_read_date = 0;
+    root_dir->first_cluster = 0;
+    root_dir->last_write_time = 0;
+    root_dir->last_write_date = 0;
+    root_dir->file_size_bytes = ctx->header.descriptions_count_in_root * FILE_DESC_SIZE_BYTE;
+    root_dir->inner.is_root = true;
+    return 0;
+}
+
+int _load_next_sector_root(Fat16Ctx *ctx, Fat16FileDesc *dir, ulong sector, RamAddr dst);
+int _load_next_sector_dir(Fat16Ctx *ctx, Fat16FileDesc *dir, ulong sector, RamAddr dst);
+
+int fat16_list(ctx, dir, files, max_files_count)
+Fat16Ctx *ctx; Fat16FileDesc *dir; Fat16FileDesc *files; uint max_files_count; {
+    int (*next_sec_f)();
+    uint desk_cnt, cluster;
+    int rc;
+    reci(!(dir->attribute & FATTR_DIR),
+         ("Failed to get list of files, %s is not a directory", dir->name));
+    desk_cnt = ctx->header.descriptions_count_in_root;
+    next_sec_f = _load_next_sector_root;
+    if (!dir->inner.is_root) {
+        next_sec_f = _load_next_sector_dir;
+        cluster = dir->first_cluster;
+        desk_cnt = FILE_DESC_PER_SECTOR;
+        while (1) {
+            rc = get_next_cluster(ctx, cluster, &cluster);
+            reci(rc, ("Failed to find dir size: failed to get next cluster"));
+            if (cluster >= 0xFFF8) {
+                break;
+            }
+            reci((cluster < 0x0003 || cluster > 0xFFEF),
+                 ("Failed to find dir size, unexpected fat entry: 0x%04x", cluster));
+            desk_cnt += FILE_DESC_PER_SECTOR;
+        }
+        desk_cnt *= ctx->header.sectors_per_cluster;
+        dir->file_size_bytes = (ulong)desk_cnt * FILE_DESC_SIZE_BYTE;
+    }
+    return list_root(ctx, dir, next_sec_f, desk_cnt, files, max_files_count);
+}
+
+int _load_next_sector_root(ctx, dir, sector, dst)
+Fat16Ctx *ctx; Fat16FileDesc *dir; ulong sector; RamAddr dst; {
+    int rc;
+    rc = disk_load(ctx->disk, ctx->root_dir_sector + sector, dst, (uint)1);
+    reci(rc, ("Failed to load root dir sector: %d", rc));
+    return;
+}
+
+int _load_next_sector_dir(ctx, dir, sector, dst)
+Fat16Ctx *ctx; Fat16FileDesc *dir; ulong sector; RamAddr dst; {
+    int rc;
+    rc = fat16_load_one(ctx, dir, sector, dst);
+    reci(rc, ("Failed to load dir file %s sector: %d", dir->name, rc));
+    return;
+}
+
+int _list_root(ctx, dir, next_sec_f, desc_count, files, max_files_count)
+Fat16Ctx *ctx; Fat16FileDesc *dir; int (*next_sec_f)(); uint desc_count; Fat16FileDesc *files;
+int max_files_count; {
+    uint read_files, i;
     ulong sector;
     int rc, saved_files;
     Fat16FileDesc tmp;
 
-    sector = ctx->root_dir_sector;
-    desc_count = ctx->header.descriptions_count_in_root;
+    sector = 0;
     saved_files = 0;
     for (read_files = 0; read_files < desc_count;) {
-        rc = disk_load(ctx->disk, sector, Local(ctx->buff_addr), (uint)1);
-        reci(rc, ("Failed to load root dir sector: %d", rc));
+        rc = next_sec_f(ctx, dir, sector, Local(ctx->buff_addr));
+        reci(rc, ("Failed to load next sector"));
         for (i = 0;
-             i < 16 && read_files < desc_count && saved_files < max_files_count;
+             i < FILE_DESC_PER_SECTOR && read_files < desc_count && saved_files < max_files_count;
              i++, read_files++)
         {
-            parse_file_desc((void *)(ctx->buff_addr + i * 32), &tmp);
-            if (tmp.name[0] != 0 && tmp.name[0] != 0xe5) {
+            parse_file_desc((void *)(ctx->buff_addr + i * FILE_DESC_SIZE_BYTE), &tmp);
+            if (tmp.name[0] != 0 && tmp.name[0] != DELETED_FILE_NAME_FIRST_CHAR) {
                 files[saved_files] = tmp;
                 saved_files++;
             }
@@ -101,7 +185,58 @@ int fat16_list_root(Fat16Ctx *ctx, Fat16FileDesc *files, int max_files_count) {
     return saved_files;
 }
 
-int fat16_load_file(Fat16Ctx *ctx, char *path, uint dts) {
-    return -1;
+int _get_next_cluster(ctx, current, next)
+Fat16Ctx *ctx; uint current, *next; {
+    int rc;
+    ulong sector, offset;
+    sector = ctx->header.system_area_size_sectors + current / ((512 / 2)/*fat entry per sector*/);
+    offset = (current % ((512 / 2)/*fat entry per sector*/)) * 2;
+    rc = disk_load(ctx->disk, sector, Local(ctx->buff_addr), (uint)1);
+    reci(rc, ("Failed to load sector with part of fat: %d", rc));
+    *next = *((uint *)(ctx->buff_addr + offset));
+    return 0;
 }
 
+int fat16_load_one(ctx, file, src_sector, dst)
+Fat16Ctx *ctx; Fat16FileDesc *file; ulong src_sector; RamAddr dst; {
+    int rc;
+    ulong cluster_sector, offset_in_cluster;
+    uint i, cluster_count, cluster;
+
+    reci((src_sector >= (file->file_size_bytes + 511) / 512),
+         ("Failed to load file content: sector out of range: "
+          "sector: %lu, file size: %lu", src_sector, file->file_size_bytes));
+
+    cluster_count = (uint)(src_sector / ctx->header.sectors_per_cluster);
+    cluster = file->first_cluster;
+    for (i = 0; i < cluster_count; i++) {
+        rc = get_next_cluster(ctx, cluster, &cluster);
+        reci((cluster < 0x0003 || cluster > 0xFFEF), ("Unexpected cluster desc: 0x%04x", cluster));
+    }
+
+    cluster_sector = (ulong)(cluster - 2) * ctx->header.sectors_per_cluster +
+                     ctx->root_dir_sector +
+                     ((ctx->header.descriptions_count_in_root * FILE_DESC_SIZE_BYTE) /
+                      SECTOR_SIZE_BYTE);
+    offset_in_cluster = src_sector % ctx->header.sectors_per_cluster;
+    src_sector = cluster_sector + offset_in_cluster;
+
+    rc = disk_load(ctx->disk, (ulong)src_sector, dst, (uint)1);
+    reci(rc, ("Failed to load file content"));
+    return 0;
+}
+
+int fat16_load(ctx, file, dst, dst_size_sectors)
+Fat16Ctx *ctx; Fat16FileDesc *file; RamAddr dst; ulong dst_size_sectors; {
+    ulong i, file_size_sectors;
+    int rc;
+    file_size_sectors = (file->file_size_bytes + 511) / 512;
+    reci(dst_size_sectors < file_size_sectors, ("Failed to load file content: buffer provided too "
+         "small: required %lu, provided: %lu", file_size_sectors, dst_size_sectors));
+    for (i = 0; i < file_size_sectors; i += 1) {
+        rc = fat16_load_one(ctx, file, i, dst);
+        reci(rc, ("Failed to load %s.%s files sector: %lu", file->name, file->ext, i));
+        dst += SECTOR_SIZE_BYTE;
+    }
+    return 0;
+}

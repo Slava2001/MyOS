@@ -35,6 +35,21 @@ char* ultoa(ulong val, char *buff, int len, int base);
 int isdigit(char ch);
 
 /**
+ * Trim trailing space in null-terminated string.
+ * "hello\x20\x20\x20\0" -> "hello\0\x20\x20\0"
+ * @param[inout] str null-terminated sring to trim spaces
+ */
+void trim_trailing_spaces(char *str);
+
+/**
+ * Return null-terminated string length (without null)
+ * strlen("hello") == 5
+ * @param[in] str input string
+ * @return str length without terminated null
+ */
+uint strlen(char *str);
+
+/**
  * Copy len bytes from src to dst
  * @param[out] dst destination address
  * @param[in] src source addres

@@ -29,6 +29,7 @@ void printf(fmt) char *fmt; {
     char *cursor, *arg_ptr, tmp_buff[TMP_BUFF_SIZE], padding_char;
     FmtDesc fmt_desc;
     int base, padding;
+    uint str_len;
 
     arg_ptr = (char *)(&fmt + 1);
 
@@ -46,8 +47,25 @@ void printf(fmt) char *fmt; {
                     arg_ptr += sizeof('\0');
                 break;
                 case 's':
-                    puts(*(char **)arg_ptr);
+                    cursor = *(char **)arg_ptr;
                     arg_ptr += sizeof(char *);
+                    str_len = strlen(cursor);
+                    if (str_len > (uint)fmt_desc.precision && fmt_desc.precision > 0) {
+                        str_len = (uint)fmt_desc.precision;
+                    }
+                    padding = (int)fmt_desc.width - str_len;
+                    if (fmt_desc.flag == '-') {
+                        for (;padding > 0; padding--) {
+                            putc(' ');
+                        }
+                    }
+                    for (;str_len > 0; str_len--) {
+                            putc(*cursor);
+                            cursor++;
+                    }
+                    for (;padding > 0; padding--) {
+                        putc(' ');
+                    }
                 break;
                 case 'd':
                 case 'u':
