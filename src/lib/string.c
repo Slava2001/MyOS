@@ -68,3 +68,11 @@ uint strlen(str) char *str; {
     }
     return rc;
 }
+
+int strcmp(a, b) char *a, *b; {
+    while (*a && *a == *b) {
+        a++;
+        b++;
+    }
+    return (int)(*b - *a);
+}

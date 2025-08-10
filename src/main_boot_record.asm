@@ -8,6 +8,8 @@ times 3 - ($-$$) db 0
 ; FAT16 header
 times 62 - ($-$$) db 0
 
+BOOTLOADER_ADDR EQU 0x800
+
 start:
     cli
         ; setup registers
@@ -15,8 +17,8 @@ start:
         mov DS, AX
         mov ES, AX
         mov SS, AX
-        mov BP, 0x7C00
-        mov SP, 0x7C00
+        mov BP, 0x400
+        mov SP, 0x400
     sti
 
     ; print start message
@@ -40,20 +42,12 @@ start:
     mov SI, str_new_line
     call out_asciz
 
-    cli
-        ; setup registers
-        mov AX, 0x7E0
-        mov DS, AX
-        mov ES, AX
-        mov SS, AX
-        mov SP, 0xFFFF
-        mov BP, 0xFFFF
-    sti
-
     ; jump on second bootloader
-    jmp 0x07E0:0x0
+    call BOOTLOADER_ADDR:0x0
 
 hold:
+    mov SI, str_hold
+    call out_asciz
     cli
     hlt
     jmp hold
@@ -69,9 +63,9 @@ load_second_bootloader:
     mov DH, 0x00 ; Head number
     mov CX, 0x02 ; Track number 15-6 bit, Sector number - 5-0 bit
     mov AL, SECOND_BOOTLOADER_SIZE_SECTORS; Num of sectors to load
-    mov BX, 0x00
+    mov BX, BOOTLOADER_ADDR
     mov ES, BX
-    mov BX, 0x7E00
+    xor BX, BX
     int 0x13
     jnc .no_error
         mov SI, str_failed_to_load_sector
@@ -139,6 +133,7 @@ str_start_loading: db "Start loading bootloader...",
 str_new_line: db 13, 10, 0
 str_failed_to_load_sector: db "Failed to load sector, error code: 0x", 0
 str_load_ok: db "Second bootloader loaded: OK", 13, 10, 0
+str_hold: db "[MBR]: Enter in infinity loop", 13, 10, 0
 
 times 510 - ($-$$) db 0
 db 0x55, 0xAA

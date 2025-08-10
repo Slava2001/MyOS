@@ -9,9 +9,10 @@ default: help
 
 help:
 	@echo "Available commands:"
-	@echo "  make build   - compile the project"
 	@echo "  make clean   - remove compile artifacts"
+	@echo "  make build   - compile the project"
 	@echo "  make img     - create a disk image"
+	@echo "  make kernel  - build kernel"
 	@echo "  make run     - run the OS in qemu"
 
 build: create_builddir mbr bootloader
@@ -26,19 +27,19 @@ clean:
 # Build main boor record
 
 mbr: ./src/main_boot_record.asm
-	@nasm ./src/main_boot_record.asm -f bin -o $(BUILDDIR)/mbr.bin
+	@nasm -w+error ./src/main_boot_record.asm -f bin -o $(BUILDDIR)/mbr.bin
 	@echo "[build] Compiling the MBR: OK"
 
 # Build second bootloader
 
-bootloader: bootloader_crt bootloader_main lib_all
+bootloader: crt bootloader_main lib_all
 	@ld86 -d -o $(BUILDDIR)/bootloader.bin $(BUILDDIR)/crt0.o $(BUILDDIR)/bootloader_main.o $(BUILDDIR)/*.olib
 	@if [ "$$(stat -c %s $(BUILDDIR)/bootloader.bin)" -gt "$$((512 * $(SECOND_BOOTLOADER_SIZE_SECTORS)))" ]; then \
 	    exit 1; \
 	 fi
 
-bootloader_crt: ./src/bootloader/crt0.asm
-	@nasm ./src/bootloader/crt0.asm -f as86 -o $(BUILDDIR)/crt0.o
+crt: ./src/crt0.asm
+	@nasm -w+error ./src/crt0.asm -f as86 -o $(BUILDDIR)/crt0.o
 	@echo "[build] Compiling the crt0: OK"
 
 bootloader_main: ./src/bootloader/main.c
@@ -47,20 +48,20 @@ bootloader_main: ./src/bootloader/main.c
 
 # Build libs
 
-lib_all: lib_stdio lib_math lib_disk lib_string lib_fat16
+lib_all: lib_stdio lib_math lib_disk lib_string lib_fat16 lib_fcall
 
 lib_stdio: ./src/lib/stdio.c ./src/lib/stdio.asm lib_math
 	@bcc -ansi -0 -f -Iinclude -W -c ./src/lib/stdio.c -o $(BUILDDIR)/stdio.olib
-	@nasm ./src/lib/stdio.asm -f as86 -o $(BUILDDIR)/stdio_asm.olib
+	@nasm -w+error ./src/lib/stdio.asm -f as86 -o $(BUILDDIR)/stdio_asm.olib
 	@echo "[build] Compiling the lib_stdio: OK"
 
 lib_math: ./src/lib/math.asm
-	@nasm $< -f as86 -o $(BUILDDIR)/math.olib
+	@nasm -w+error $< -f as86 -o $(BUILDDIR)/math.olib
 	@echo "[build] Compiling the lib_math: OK"
 
 lib_disk: ./src/lib/disk.c ./src/lib/disk.asm
 	@bcc -ansi -0 -f -Iinclude -W -c ./src/lib/disk.c -o $(BUILDDIR)/disk.olib
-	@nasm ./src/lib/disk.asm -f as86 -o $(BUILDDIR)/disk_asm.olib
+	@nasm -w+error ./src/lib/disk.asm -f as86 -o $(BUILDDIR)/disk_asm.olib
 	@echo "[build] Compiling the lib_disk: OK"
 
 lib_string: ./src/lib/string.c
@@ -71,9 +72,22 @@ lib_fat16: ./src/lib/fat16.c
 	@bcc -ansi -0 -f -Iinclude -W -c ./src/lib/fat16.c -o $(BUILDDIR)/fat16.olib
 	@echo "[build] Compiling the lib_fat16: OK"
 
+lib_fcall: ./src/lib/fcall.asm
+	@nasm -w+error $< -f as86 -o $(BUILDDIR)/fcall.olib
+	@echo "[build] Compiling the lib_fcall: OK"
+
+# Build kernel
+
+kernel: crt kernel_main lib_all
+	@ld86 -d -o $(BUILDDIR)/kernel.bin $(BUILDDIR)/crt0.o $(BUILDDIR)/kernel_main.o $(BUILDDIR)/*.olib
+
+kernel_main: ./src/kernel/main.c
+	@bcc -ansi -0 -f -Iinclude -W -c ./src/kernel/main.c -o $(BUILDDIR)/kernel_main.o
+	@echo "[build] Compiling the kernel main: OK"
+
 # Create image
 
-img:
+img: build kernel
 	@rm -f $(IMG_NAME)
 	@echo "[img] Remove old image: OK"
 	@dd if=/dev/zero of=$(IMG_NAME) bs=1MiB count=$(IMG_SIZE_MB) > /dev/null 2>&1
@@ -88,12 +102,13 @@ img:
 	@temp_dir=$$(mktemp -d);                             \
 	 sudo mount -t msdos $(IMG_NAME) $$temp_dir -o loop; \
 	 sudo cp -r ./src $$temp_dir;                        \
+	 sudo cp $(BUILDDIR)/kernel.bin $$temp_dir;          \
 	 sudo umount $(IMG_NAME);
 	@echo "[img] Writing files: OK"
 	@echo "[img] Creating disk image: OK"
 
 # Run qemu
 
-run: build img
+run: img
 	@echo "[run] Running in emulator..."
 	@sudo qemu-system-x86_64 -drive file=./$(IMG_NAME),format=raw,if=virtio

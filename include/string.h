@@ -50,6 +50,14 @@ void trim_trailing_spaces(char *str);
 uint strlen(char *str);
 
 /**
+ * Compare 2 null-terminated string
+ * @param a first string
+ * @param b second string
+ * @return -1 if a < b, 1 if a > b, 0 if a == b
+ */
+int strcmp(char *a, char *b);
+
+/**
  * Copy len bytes from src to dst
  * @param[out] dst destination address
  * @param[in] src source addres
