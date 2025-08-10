@@ -78,12 +78,17 @@ lib_fcall: ./src/lib/fcall.asm
 
 # Build kernel
 
-kernel: crt kernel_main lib_all
-	@ld86 -d -o $(BUILDDIR)/kernel.bin $(BUILDDIR)/crt0.o $(BUILDDIR)/kernel_main.o $(BUILDDIR)/*.olib
+kernel: crt kernel_main lib_all lib_int
+	@ld86 -d -o $(BUILDDIR)/kernel.bin $(BUILDDIR)/crt0.o $(BUILDDIR)/*.okernel $(BUILDDIR)/*.olib
 
 kernel_main: ./src/kernel/main.c
-	@bcc -ansi -0 -f -Iinclude -W -c ./src/kernel/main.c -o $(BUILDDIR)/kernel_main.o
+	@bcc -ansi -0 -f -Iinclude -W -c ./src/kernel/main.c -o $(BUILDDIR)/main.okernel
 	@echo "[build] Compiling the kernel main: OK"
+
+lib_int: ./src/kernel/int.c ./src/kernel/int.asm
+	@bcc -ansi -0 -f -Iinclude -W -c ./src/kernel/int.c -o $(BUILDDIR)/int.okernel
+	@nasm -w+error ./src/kernel/int.asm -f as86 -o $(BUILDDIR)/int_asm.okernel
+	@echo "[build] Compiling the lib_int: OK"
 
 # Create image
 
