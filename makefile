@@ -15,7 +15,7 @@ help:
 	@echo "  make kernel  - build kernel"
 	@echo "  make run     - run the OS in qemu"
 
-build: create_builddir mbr bootloader
+build: create_builddir mbr bootloader kernel
 	@echo "[build] Compiling the project: OK"
 
 create_builddir:

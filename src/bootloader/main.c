@@ -7,6 +7,8 @@
 #error "First arg in AX unsupported!!!"
 #endif
 
+char *APP_NAME = "[ BOOT ]";
+
 #define BOOTLOADER_DISK 0x80
 
 #define KERNEL_SEGMENT (ulong)0x0050

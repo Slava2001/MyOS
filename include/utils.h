@@ -3,10 +3,12 @@
 
 #include "stdio.h"
 
+extern char *APP_NAME;
+
 #if 0
-#define log(lvl, msg) {printf(__FILE__":%d ["#lvl"]: ", __LINE__); printf msg; puts("\n\r");}
+#define log(lvl, msg) {printf(__FILE__":%d %s["#lvl"]: ", APP_NAME, __LINE__); printf msg; puts("\n\r");}
 #else
-#define log(lvl, msg) {puts("["#lvl"]: "); printf msg; puts("\n\r");}
+#define log(lvl, msg) {puts(APP_NAME); puts("["#lvl"]: "); printf msg; puts("\n\r");}
 #endif
 
 #define logi(msg) log(Info, msg)

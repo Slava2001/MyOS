@@ -45,6 +45,15 @@ start:
     ; jump on second bootloader
     call BOOTLOADER_ADDR:0x0
 
+    ; exec cli
+    mov AX, DS
+    mov ES, AX
+    mov AH, 0x4B
+    mov AL, 0x00
+    mov DX, cli_path
+    mov BX, cli_exec_parm
+    int 0x21
+
 hold:
     mov SI, str_hold
     call out_asciz
@@ -134,6 +143,14 @@ str_new_line: db 13, 10, 0
 str_failed_to_load_sector: db "Failed to load sector, error code: 0x", 0
 str_load_ok: db "Second bootloader loaded: OK", 13, 10, 0
 str_hold: db "[MBR]: Enter in infinity loop", 13, 10, 0
+
+cli_path: db "CLI.COM", 0
+cli_exec_parm:
+    psp_segment: dw 0x0000
+    cl_ptr:      dd 0x00000000
+    env_ptr:     dd 0x00000000
+    fcb1:        dd 0x00000000
+    fcb2:        dd 0x00000000
 
 times 510 - ($-$$) db 0
 db 0x55, 0xAA
