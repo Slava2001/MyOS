@@ -112,7 +112,9 @@ img: build kernel
 	@temp_dir=$$(mktemp -d);                             \
 	 sudo mount -t msdos $(IMG_NAME) $$temp_dir -o loop; \
 	 sudo cp -r ./src $$temp_dir;                        \
+	 sudo cp -r ./include $$temp_dir;                    \
 	 sudo cp $(BUILDDIR)/kernel.bin $$temp_dir;          \
+	 sudo cp ./3rdparty/HRY/LINES/LINE.COM $$temp_dir;   \
 	 sudo umount $(IMG_NAME);
 	@echo "[img] Writing files: OK"
 	@echo "[img] Creating disk image: OK"
