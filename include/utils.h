@@ -6,7 +6,7 @@
 extern char *APP_NAME;
 
 #if 0
-#define log(lvl, msg) {printf(__FILE__":%d %s["#lvl"]: ", APP_NAME, __LINE__); printf msg; puts("\n\r");}
+#define log(lvl, msg) {printf(__FILE__":%d %s["#lvl"]: ", __LINE__, APP_NAME); printf msg; puts("\n\r");}
 #else
 #define log(lvl, msg) {puts(APP_NAME); puts("["#lvl"]: "); printf msg; puts("\n\r");}
 #endif

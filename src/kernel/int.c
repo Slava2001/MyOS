@@ -38,6 +38,7 @@ void int_common_handler(int_num, regs) uint int_num; Regs *regs; {
         return int_x21_handler(regs);
     default:
         loge(("Unsupported interrupt! int: 0x%02x", int_num));
+        while (1);
         break;
     }
     return;
@@ -49,6 +50,7 @@ void int_x21_handler(regs) Regs *regs; {
         return int_x21_x4b_handler(regs);
     default:
         loge(("Unsupported interrupt 0x21 subfunction! subfunction: 0x%02x", (uint)regs->a.byte.h));
+        while (1);
         break;
     }
 }

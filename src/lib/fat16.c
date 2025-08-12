@@ -14,10 +14,10 @@ void _parse_file_desc(void *buff, Fat16FileDesc *desc);
 #define parse_fat_header(buff, hdr) _parse_fat_header((void *)(buff), (Fat16Header *)(hdr))
 void _parse_fat_header(void *buff, Fat16Header *hdr);
 
-#define list_root(ctx, dir, next_sec_f, desc_count, files, max_files_count) \
-    (int)_list_root((Fat16Ctx *)(ctx), (Fat16FileDesc *)(dir), next_sec_f, (uint)(desc_count), \
-                    (Fat16FileDesc *)(files), (int)(max_files_count));
-int _list_root(Fat16Ctx *ctx, Fat16FileDesc *dir, int (*next_sec_f)(), uint desc_count,
+#define list_dir(ctx, dir, next_sec_f, desc_count, skip, files, max_files_count) \
+    (int)_list_dir((Fat16Ctx *)(ctx), (Fat16FileDesc *)(dir), next_sec_f, (int)(desc_count), \
+                   (int)(skip), (Fat16FileDesc *)(files), (int)(max_files_count));
+int _list_dir(Fat16Ctx *ctx, Fat16FileDesc *dir, int (*next_sec_f)(), int desc_count, int skip,
                Fat16FileDesc *files, int max_files_count);
 
 #define get_next_cluster(ctx, current, next) \
@@ -112,8 +112,8 @@ int fat16_get_root(ctx, root_dir) Fat16Ctx *ctx; Fat16FileDesc *root_dir; {
 int _load_next_sector_root(Fat16Ctx *ctx, Fat16FileDesc *dir, ulong sector, RamAddr dst);
 int _load_next_sector_dir(Fat16Ctx *ctx, Fat16FileDesc *dir, ulong sector, RamAddr dst);
 
-int fat16_list(ctx, dir, files, max_files_count)
-Fat16Ctx *ctx; Fat16FileDesc *dir; Fat16FileDesc *files; uint max_files_count; {
+int fat16_list(ctx, dir, skip, files, max_files_count)
+Fat16Ctx *ctx; Fat16FileDesc *dir; int skip; Fat16FileDesc *files; int max_files_count; {
     int (*next_sec_f)();
     uint desk_cnt, cluster;
     int rc;
@@ -138,7 +138,7 @@ Fat16Ctx *ctx; Fat16FileDesc *dir; Fat16FileDesc *files; uint max_files_count; {
         desk_cnt *= ctx->header.sectors_per_cluster;
         dir->file_size_bytes = (ulong)desk_cnt * FILE_DESC_SIZE_BYTE;
     }
-    return list_root(ctx, dir, next_sec_f, desk_cnt, files, max_files_count);
+    return list_dir(ctx, dir, next_sec_f, desk_cnt, skip, files, max_files_count);
 }
 
 int _load_next_sector_root(ctx, dir, sector, dst)
@@ -157,20 +157,21 @@ Fat16Ctx *ctx; Fat16FileDesc *dir; ulong sector; RamAddr dst; {
     return;
 }
 
-int _list_root(ctx, dir, next_sec_f, desc_count, files, max_files_count)
-Fat16Ctx *ctx; Fat16FileDesc *dir; int (*next_sec_f)(); uint desc_count; Fat16FileDesc *files;
-int max_files_count; {
-    uint read_files, i;
+int _list_dir(ctx, dir, next_sec_f, desc_count, skip, files, max_files_count)
+Fat16Ctx *ctx; Fat16FileDesc *dir; int (*next_sec_f)(); int desc_count; int skip;
+Fat16FileDesc *files; int max_files_count; {
+    int read_files, i;
     ulong sector;
     int rc, saved_files;
     Fat16FileDesc tmp;
 
-    sector = 0;
+    sector = skip / FILE_DESC_PER_SECTOR;
+    i = skip % FILE_DESC_PER_SECTOR;
     saved_files = 0;
-    for (read_files = 0; read_files < desc_count;) {
+    for (read_files = skip; read_files < desc_count && saved_files < max_files_count;) {
         rc = next_sec_f(ctx, dir, sector, Local(ctx->buff_addr));
         reci(rc, ("Failed to load next sector"));
-        for (i = 0;
+        for (;
              i < FILE_DESC_PER_SECTOR && read_files < desc_count && saved_files < max_files_count;
              i++, read_files++)
         {
@@ -180,6 +181,7 @@ int max_files_count; {
                 saved_files++;
             }
         }
+        i = 0;
         sector += 1;
     }
     return saved_files;
@@ -231,12 +233,56 @@ Fat16Ctx *ctx; Fat16FileDesc *file; RamAddr dst; ulong dst_size_sectors; {
     ulong i, file_size_sectors;
     int rc;
     file_size_sectors = (file->file_size_bytes + 511) / 512;
-    reci(dst_size_sectors < file_size_sectors, ("Failed to load file content: buffer provided too "
+    reci(dst_size_sectors < file_size_sectors, ("Failed to load file content: provided buffer too "
          "small: required %lu, provided: %lu", file_size_sectors, dst_size_sectors));
     for (i = 0; i < file_size_sectors; i += 1) {
         rc = fat16_load_one(ctx, file, i, dst);
-        reci(rc, ("Failed to load %s.%s files sector: %lu", file->name, file->ext, i));
+        reci(rc, ("Failed to load %.8s.%.3s files sector: %lu", file->name, file->ext, i));
         dst += SECTOR_SIZE_BYTE;
     }
     return 0;
+}
+
+#define FILES_BUFF_SIZE 64
+
+int fat16_find(ctx, dir, path, file)
+Fat16Ctx *ctx; Fat16FileDesc *dir; char *path; Fat16FileDesc *file; {
+    char name[9];
+    char *ext;
+    int name_len, skip, rc, i;
+    Fat16FileDesc files[FILES_BUFF_SIZE];
+    Fat16FileDesc *found_file;
+
+    reci(*path != '/' || !dir->inner.is_root, ("Currently only absolute path supported"));
+    ext = path + 1;
+    name_len = 0;
+    while (*ext != '.') {
+        name[name_len] = *ext;
+        name_len++;
+        ext++;
+    }
+    ext++;
+    name[name_len] = 0;
+
+    skip = 0;
+    found_file = NULL;
+    while (1) {
+        rc = fat16_list(ctx, dir, skip, files, FILES_BUFF_SIZE);
+        skip += FILES_BUFF_SIZE;
+        reci(rc < 0, ("Failed to list files in root dir"));
+        for (i = 0; i < rc; i++) {
+            if (!strcmp(files[i].name, name) && !strcmp(files[i].ext, ext)) {
+                found_file = &files[i];
+                break;
+            }
+        }
+        if (rc < FILES_BUFF_SIZE) {
+            break;
+        }
+    }
+    if (found_file) {
+        *file = *found_file;
+        return 0;
+    }
+    return 1;
 }

@@ -82,11 +82,14 @@ int fat16_get_root(Fat16Ctx *ctx, Fat16FileDesc *root_dir);
  * Get list of files in specifed directory
  * @param[in] ctx fat 16 context
  * @param[in] dir directory description
+ * @param skip skip descriptions
  * @param[out] files buffer to save files descriptions
- * @param[out] max_files_count buffer size
+ * @param max_files_count buffer size
  * @return -1 on error, else 0
  */
-int fat16_list(Fat16Ctx *ctx, Fat16FileDesc *dir, Fat16FileDesc *files, uint max_files_count);
+int fat16_list(
+    Fat16Ctx *ctx, Fat16FileDesc *dir, int skip, Fat16FileDesc *files, int max_files_count
+);
 
 /**
  * Load one sector of file
@@ -107,5 +110,15 @@ int fat16_load_one(Fat16Ctx *ctx, Fat16FileDesc *file, ulong src_sector, RamAddr
  * @return -1 on error, else 0
  */
 int fat16_load(Fat16Ctx *ctx, Fat16FileDesc *file, RamAddr dst, ulong dst_size_sectors);
+
+/**
+ * Find file by path
+ * @param[in] ctx fat 16 context
+ * @param[in] dir start dir, used for relative paths
+ * @param[in] path path to file
+ * @param[out] file found file
+ * @return -1 on error, 0 if file found, 1 if file not found
+ */
+int fat16_find(Fat16Ctx *ctx, Fat16FileDesc *dir, char *path, Fat16FileDesc *file);
 
 #endif // FAT16_H

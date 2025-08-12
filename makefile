@@ -109,12 +109,14 @@ img: build kernel
 	@echo "[img] Writing MBR: OK"
 	@dd if=$(BUILDDIR)/bootloader.bin of=$(IMG_NAME) bs=512 seek=1 conv=notrunc iflag=skip_bytes,count_bytes > /dev/null 2>&1
 	@echo "[img] Writing second bootloader: OK"
-	@temp_dir=$$(mktemp -d);                             \
-	 sudo mount -t msdos $(IMG_NAME) $$temp_dir -o loop; \
-	 sudo cp -r ./src $$temp_dir;                        \
-	 sudo cp -r ./include $$temp_dir;                    \
-	 sudo cp $(BUILDDIR)/kernel.bin $$temp_dir;          \
-	 sudo cp ./3rdparty/HRY/LINES/LINE.COM $$temp_dir;   \
+	@set -e;                                                \
+	 temp_dir=$$(mktemp -d);                                \
+	 sudo mount -t msdos $(IMG_NAME) $$temp_dir -o loop;    \
+	 sudo cp -r ./src $$temp_dir;                           \
+	 sudo cp -r ./include $$temp_dir;                       \
+	 sudo cp $(BUILDDIR)/kernel.bin $$temp_dir;             \
+	 sudo cp ./3rdparty/HRY/LINES/LINES.COM $$temp_dir;     \
+	 sudo cp ./3rdparty/UTILITY/ASCII/ASCII.COM $$temp_dir; \
 	 sudo umount $(IMG_NAME);
 	@echo "[img] Writing files: OK"
 	@echo "[img] Creating disk image: OK"

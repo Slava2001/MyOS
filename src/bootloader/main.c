@@ -17,13 +17,12 @@ char *APP_NAME = "[ BOOT ]";
 #define KERNEL_MAX_SIZE (ulong)60
 
 int bootloader_main() {
-    int rc;
+    int rc, skip, i;
     DiskCtx disk;
     char fat_buf[512];
     Fat16Ctx fat;
-    Fat16FileDesc files[512];
     Fat16FileDesc root_dir;
-    Fat16FileDesc *kernel;
+    Fat16FileDesc kernel;
 
     clear_screen();
     rc = disk_init(&disk, BOOTLOADER_DISK);
@@ -39,19 +38,11 @@ int bootloader_main() {
     rc = fat16_get_root(&fat, &root_dir);
     reci(rc < 0, ("Failed to get root dir"));
 
-    rc = fat16_list(&fat, &root_dir, files, (uint)512);
-    reci(rc < 0, ("Failed to list files in root dir"));
+    rc = fat16_find(&fat, &root_dir, "/KERNEL.BIN", &kernel);
+    reci(rc, ("Failed to find kernel file"));
+    logi(("Kernel found. size: %lu bytes", kernel.file_size_bytes));
 
-    kernel = NULL;
-    for (rc-- ;rc >= 0; rc--) {
-        if (!strcmp(files[rc].name, "KERNEL") && !strcmp(files[rc].ext, "BIN")) {
-            kernel = &files[rc];
-            logi(("Kernel found. size: %lu bytes", kernel->file_size_bytes));
-            break;
-        }
-    }
-    reci(!kernel, ("Kernel not found!"));
-    rc = fat16_load(&fat, kernel, KERNEL_ADDRES, KERNEL_MAX_SIZE);
+    rc = fat16_load(&fat, &kernel, KERNEL_ADDRES, KERNEL_MAX_SIZE);
     reci(rc, ("Failed to load kernel"));
     logi(("Kernel loaded"));
 
