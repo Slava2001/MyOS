@@ -65,4 +65,21 @@ int strcmp(char *a, char *b);
  */
 void memcpy(void *dst, void *src, uint len);
 
+/**
+ * Copy len bytes from far src to dst
+ * @param[out] dst destination address
+ * @param[in] segment source segment
+ * @param[in] offset source offset
+ * @param len bytes count
+ */
+void memcpy_from_far(void *dst, uint src_segment, uint src_offset, uint len);
+
+/**
+ * Copy null-terminated string
+ * @param[out] dst destination address
+ * @param[in] segment source segment
+ * @param[in] offset source offset
+ */
+void strcpy_from_far(char *dst, uint src_segment, uint src_offset);
+
 #endif // STRING_H

@@ -66,6 +66,7 @@ lib_disk: ./src/lib/disk.c ./src/lib/disk.asm
 
 lib_string: ./src/lib/string.c
 	@bcc -ansi -0 -f -Iinclude -W -c ./src/lib/string.c -o $(BUILDDIR)/string.olib
+	@nasm -w+error ./src/lib/string.asm -f as86 -o $(BUILDDIR)/string_asm.olib
 	@echo "[build] Compiling the lib_string: OK"
 
 lib_fat16: ./src/lib/fat16.c
@@ -78,7 +79,7 @@ lib_fcall: ./src/lib/fcall.asm
 
 # Build kernel
 
-kernel: crt kernel_main lib_all lib_int
+kernel: crt kernel_main lib_all lib_int lib_proc
 	@ld86 -d -o $(BUILDDIR)/kernel.bin $(BUILDDIR)/crt0.o $(BUILDDIR)/*.okernel $(BUILDDIR)/*.olib
 
 kernel_main: ./src/kernel/main.c
@@ -89,6 +90,10 @@ lib_int: ./src/kernel/int.c ./src/kernel/int.asm
 	@bcc -ansi -0 -f -Iinclude -W -c ./src/kernel/int.c -o $(BUILDDIR)/int.okernel
 	@nasm -w+error ./src/kernel/int.asm -f as86 -o $(BUILDDIR)/int_asm.okernel
 	@echo "[build] Compiling the lib_int: OK"
+
+lib_proc: ./src/kernel/proc.c
+	@bcc -ansi -0 -f -Iinclude -W -c ./src/kernel/proc.c -o $(BUILDDIR)/proc.okernel
+	@echo "[build] Compiling the lib_proc: OK"
 
 # Create image
 
