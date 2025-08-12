@@ -31,8 +31,8 @@ int prox_exec(path, params) char *path; ExecParam *params; {
         mov ds, ax
         mov es, ax
         mov ss, ax
-        mov sp, 0xffff
-        mov bp, 0xffff
+        mov sp, #$ffff
+        mov bp, #$ffff
         sti
         call #$0800:#$100
     #endasm
