@@ -35,10 +35,7 @@ int bootloader_main() {
     reci(rc, ("Failed to init fat16 context"));
     logi(("Init Fat 16: Ok, volume label: %s", fat.header.volume_label));
 
-    rc = fat16_get_root(&fat, &root_dir);
-    reci(rc < 0, ("Failed to get root dir"));
-
-    rc = fat16_find(&fat, &root_dir, "/KERNEL.BIN", &kernel);
+    rc = fat16_find(&fat, NULL, "/KERNEL.BIN", &kernel);
     reci(rc, ("Failed to find kernel file"));
     logi(("Kernel found. size: %lu bytes", kernel.file_size_bytes));
 

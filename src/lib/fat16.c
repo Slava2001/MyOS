@@ -253,7 +253,7 @@ Fat16Ctx *ctx; Fat16FileDesc *dir; char *path; Fat16FileDesc *file; {
     Fat16FileDesc files[FILES_BUFF_SIZE];
     Fat16FileDesc *found_file;
 
-    reci(*path != '/' || !dir->inner.is_root, ("Currently only absolute path supported"));
+    reci(*path != '/', ("Currently only absolute path supported"));
     ext = path + 1;
     name_len = 0;
     while (*ext != '.') {

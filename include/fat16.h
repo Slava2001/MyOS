@@ -114,7 +114,7 @@ int fat16_load(Fat16Ctx *ctx, Fat16FileDesc *file, RamAddr dst, ulong dst_size_s
 /**
  * Find file by path
  * @param[in] ctx fat 16 context
- * @param[in] dir start dir, used for relative paths
+ * @param[in] dir start dir, used for relative paths (provide NULL for absolute path)
  * @param[in] path path to file
  * @param[out] file found file
  * @return -1 on error, 0 if file found, 1 if file not found
