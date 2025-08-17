@@ -43,8 +43,8 @@ bootloader.bin: $(SRT0_OBJ) $(BOOTLOADER_SRC:=.o) $(LIB_OBJ)
 	@echo "[build] Compile $(@F)"
 	    @$(LD) $(LDFLAGS) $(addprefix $(BUILDDIR)/,$+) -o $(BUILDDIR)/$@
 	@if [ "$$(stat -c %s $(BUILDDIR)/$@)" -gt "$$((512 * $(SECOND_BOOTLOADER_SIZE_SECTORS)))" ]; then \
-     exit 1; \
- fi
+         exit 1; \
+     fi
 
 KERNEL_SRC = $(wildcard src/kernel/*)
 kernel.bin: $(SRT0_OBJ) $(KERNEL_SRC:=.o) $(LIB_OBJ)
@@ -74,14 +74,14 @@ img: build
 	@dd if=$(BUILDDIR)/bootloader.bin of=$(IMG_NAME) bs=512 seek=1 conv=notrunc iflag=skip_bytes,count_bytes > /dev/null 2>&1
 	@echo "[img] Writing second bootloader: OK"
 	@set -e;                                                \
-  temp_dir=$$(mktemp -d);                                \
-  sudo mount -t msdos $(IMG_NAME) $$temp_dir -o loop;    \
-  sudo cp -r ./src $$temp_dir;                           \
-  sudo cp -r ./include $$temp_dir;                       \
-  sudo cp $(BUILDDIR)/kernel.bin $$temp_dir;             \
-  sudo cp ./3rdparty/HRY/LINES/LINES.COM $$temp_dir;     \
-  sudo cp ./3rdparty/UTILITY/ASCII/ASCII.COM $$temp_dir; \
-  sudo umount $(IMG_NAME);
+     temp_dir=$$(mktemp -d);                                \
+     sudo mount -t msdos $(IMG_NAME) $$temp_dir -o loop;    \
+     sudo cp -r ./src $$temp_dir;                           \
+     sudo cp -r ./include $$temp_dir;                       \
+     sudo cp $(BUILDDIR)/kernel.bin $$temp_dir;             \
+     sudo cp ./3rdparty/HRY/LINES/LINES.COM $$temp_dir;     \
+     sudo cp ./3rdparty/UTILITY/ASCII/ASCII.COM $$temp_dir; \
+     sudo umount $(IMG_NAME);
 	@echo "[img] Writing files: OK"
 	@echo "[img] Creating disk image: OK"
 
