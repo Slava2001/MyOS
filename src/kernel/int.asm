@@ -49,23 +49,24 @@ _int_handler_0x27:
     mov word [CS:int_num], 0x27
     jmp _int_handler_proxy
 
-int_num:   dw 0x0000
+int_num:     dw 0x0000
 regs_buf:
-reg_ax:    dw 0x0000
-reg_bx:    dw 0x0000
-reg_cx:    dw 0x0000
-reg_dx:    dw 0x0000
-reg_si:    dw 0x0000
-reg_di:    dw 0x0000
-reg_sp:    dw 0x0000
-reg_bp:    dw 0x0000
-reg_ds:    dw 0x0000
-reg_ss:    dw 0x0000
-reg_es:    dw 0x0000
-reg_flags: dw 0x0000
+reg_ax:      dw 0x0000
+reg_bx:      dw 0x0000
+reg_cx:      dw 0x0000
+reg_dx:      dw 0x0000
+reg_si:      dw 0x0000
+reg_di:      dw 0x0000
+reg_sp:      dw 0x0000
+reg_bp:      dw 0x0000
+reg_ds:      dw 0x0000
+reg_ss:      dw 0x0000
+reg_es:      dw 0x0000
+reg_flags:   dw 0x0000
+ret_segment: dw 0x0000
+ret_offset:  dw 0x0000
 
 _int_handler_proxy:
-    cli
     mov [CS:reg_ax], AX
     mov [CS:reg_bx], BX
     mov [CS:reg_cx], CX
@@ -78,23 +79,26 @@ _int_handler_proxy:
     mov [CS:reg_ss], SS
     mov [CS:reg_es], ES
 
+    mov BP, SP
+    mov AX, [BP + 0]
+    mov [CS:ret_offset], AX
+    mov AX, [BP + 2]
+    mov [CS:ret_segment], AX
+    mov AX, [BP + 4]
+    mov [CS:reg_flags], AX
+
     mov AX, CS
     mov DS, AX
     mov SS, AX
     mov ES, AX
     mov SP, 0x7700
     mov BP, 0x7700
-    pushf
-    pop word [reg_flags]
-    mov AX, [CS:reg_ax]
 
     push regs_buf
     push word [int_num]
     call _int_common_handler
     add SP, 4
 
-    push word [reg_flags]
-    popf
     mov AX, [CS:reg_ax]
     mov BX, [CS:reg_bx]
     mov CX, [CS:reg_cx]
@@ -106,5 +110,4 @@ _int_handler_proxy:
     mov DS, [CS:reg_ds]
     mov SS, [CS:reg_ss]
     mov ES, [CS:reg_es]
-    sti
 iret

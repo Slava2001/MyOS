@@ -2,18 +2,30 @@
 #include "utils.h"
 #include "fat16.h"
 #include "fcall.h"
+#include "int.h"
 
 extern Fat16Ctx FAT;
 
-int prox_exec(path, params) char *path; ExecParam *params; {
+#define MAX_PROC_COUNT 1
+ProcSlot procs[MAX_PROC_COUNT];
+
+void proc_jmp(Regs *regs);
+
+int prox_init() {
+    procs[0].free = true;
+    procs[0].segment = 0x07E0;
+    procs[0].len = 0xFFFF;
+    return 0;
+}
+
+int proc_exec(path, params, regs) char *path; ExecParam *params; Regs *regs; {
     int rc;
     Fat16FileDesc root;
     Fat16FileDesc file;
+    ProcSlot *slot;
+    Regs state;
 
     logi(("Loading Path: %.128s", path));
-    logi(("Params:\n\r    env_seg: 0x%04x\n\r    cmd_args_tail: 0x%08lx\n\r    "
-          "cmd_args_tail: 0x%08lx\n\r    cmd_args_tail: 0x%08lx\n\r",
-          params->env_seg, params->cmd_args_tail, params->fcb1, params->fcb2));
 
     rc = fat16_get_root(&FAT, &root);
     reci(rc, ("Failed to get root dir"));
@@ -21,21 +33,47 @@ int prox_exec(path, params) char *path; ExecParam *params; {
     rc = fat16_find(&FAT, &root, path, &file);
     reci(rc, ("Failed to find program: %s", path));
 
-    rc = fat16_load(&FAT, &file, (ulong)0x00008100, (ulong)1000);
+    slot = NULL;
+    for (rc = 0; rc < MAX_PROC_COUNT; rc++) {
+        if (procs[rc].free) {
+            slot = &procs[rc];
+        }
+    }
+    reci(!slot, ("Failed to find empty slot"));
+
+    slot->free = false;
+    slot->parent_state = *regs;
+    state = *regs;
+    state.sp = slot->len;
+    state.bp = slot->len;
+    state.ds = slot->segment;
+    state.ss = slot->segment;
+    state.es = slot->segment;
+    state.ret_segment = slot->segment;
+    state.ret_offset = 0x100; // for *.COM files
+
+    rc = fat16_load(&FAT, &file, (ulong)state.ret_segment * 16 + state.ret_offset,
+                    (ulong)slot->len);
     reci(rc, ("Failed to load program: %s", path));
 
     logi(("Program %s loaded", path));
 
-    #asm
-        mov ax, #$0800
-        mov ds, ax
-        mov es, ax
-        mov ss, ax
-        mov sp, #$ffff
-        mov bp, #$ffff
-        sti
-        call #$0800:#$100
-    #endasm
+    proc_jmp(&state);
 
-    return 0;
+    return -1; // unrectheble
+}
+
+ProcSlot* proc_fing_slot(code_segment) uint code_segment; {
+    int i;
+    for (i = 0; i < MAX_PROC_COUNT; i++) {
+        if (procs[i].segment == code_segment) {
+            return &procs[i];
+        }
+    }
+    return NULL;
+}
+
+void proc_exit(slot) ProcSlot* slot; {
+    slot->free = true;
+    proc_jmp(&slot->parent_state);
 }

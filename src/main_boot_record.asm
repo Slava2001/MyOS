@@ -53,9 +53,13 @@ start:
     mov ES, AX
     mov AH, 0x4B
     mov AL, 0x00
-    mov DX, cli_path
     mov BX, cli_exec_param
+    .call_int:
+    mov DX, cli_path
     int 0x21
+    mov DX, cli_path2
+    int 0x21
+    jmp .call_int
 
 hold:
     mov SI, str_hold
@@ -148,6 +152,7 @@ str_load_ok: db "Second bootloader loaded: OK", 13, 10, 0
 str_hold: db "[MBR]: Enter in infinity loop", 13, 10, 0
 
 cli_path: db "/LINES.COM", 0
+cli_path2: db "/ASCII.COM", 0
 cli_exec_param:
     env_ptr:     dd 0x0000
     cl_ptr:      dd 0x00000000

@@ -3,6 +3,7 @@
 #include "int.h"
 #include "disk.h"
 #include "fat16.h"
+#include "proc.h"
 
 #if __FIST_ARG_IN_AX__
 #error "First arg in AX unsupported!!!"
@@ -28,6 +29,11 @@ int init_kernel() {
     rc = fat16_init((void *)fat_buf, (int)sizeof(fat_buf), &DISK, &FAT);
     reci(rc, ("Failed to init fat16 context"));
     logi(("Init Fat 16: Ok, volume label: %s", FAT.header.volume_label));
+
+    rc = prox_init();
+    reci(rc, ("Failed to init proc manager"));
+    logi(("Proc manager loaded"));
+
     logi(("Kernel initialized"));
     return 0;
 }

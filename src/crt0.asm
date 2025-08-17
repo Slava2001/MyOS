@@ -31,4 +31,3 @@ retf
 tmp_segment: dw 0x0000
 tmp_sp: dw 0x0000
 tmp_bp: dw 0x0000
-
