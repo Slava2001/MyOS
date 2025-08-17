@@ -223,6 +223,7 @@ Fat16Ctx *ctx; Fat16FileDesc *file; ulong src_sector; RamAddr dst; {
     offset_in_cluster = src_sector % ctx->header.sectors_per_cluster;
     src_sector = cluster_sector + offset_in_cluster;
 
+    logd(("Loading sector of file %s in 0x%08lx", file->name, dst));
     rc = disk_load(ctx->disk, (ulong)src_sector, dst, (uint)1);
     reci(rc, ("Failed to load file content"));
     return 0;
@@ -236,6 +237,7 @@ Fat16Ctx *ctx; Fat16FileDesc *file; RamAddr dst; ulong dst_size_sectors; {
     reci(dst_size_sectors < file_size_sectors, ("Failed to load file content: provided buffer too "
          "small: required %lu, provided: %lu", file_size_sectors, dst_size_sectors));
     for (i = 0; i < file_size_sectors; i += 1) {
+        logd(("%.8s.%.3s files sector: %lu", file->name, file->ext, i));
         rc = fat16_load_one(ctx, file, i, dst);
         reci(rc, ("Failed to load %.8s.%.3s files sector: %lu", file->name, file->ext, i));
         dst += SECTOR_SIZE_BYTE;

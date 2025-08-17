@@ -151,8 +151,8 @@ str_failed_to_load_sector: db "Failed to load sector, error code: 0x", 0
 str_load_ok: db "Second bootloader loaded: OK", 13, 10, 0
 str_hold: db "[MBR]: Enter in infinity loop", 13, 10, 0
 
-cli_path: db "/LINES.COM", 0
-cli_path2: db "/ASCII.COM", 0
+cli_path: db "/ASCII.COM", 0
+cli_path2: db "/LINES.COM", 0
 cli_exec_param:
     env_ptr:     dd 0x0000
     cl_ptr:      dd 0x00000000

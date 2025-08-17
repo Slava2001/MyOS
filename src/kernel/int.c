@@ -13,7 +13,8 @@ void int_x21_x09_handler(Regs *regs); // exit from proc
 void int_common_handler(int_num, regs) uint int_num; Regs *regs; {
     switch (int_num) {
     case 0x21:
-        return int_x21_handler(regs);
+        int_x21_handler(regs);
+        break;
     default:
         loge(("Unsupported interrupt! int: 0x%02x", int_num));
         while (1);
@@ -25,9 +26,11 @@ void int_common_handler(int_num, regs) uint int_num; Regs *regs; {
 void int_x21_handler(regs) Regs *regs; {
     switch (regs->a.byte.h) {
     case 0x4B:
-        return int_x21_x4b_handler(regs);
+        int_x21_x4b_handler(regs);
+        break;
     case 0x09:
-        return int_x21_x09_handler(regs);
+        int_x21_x09_handler(regs);
+        break;
     default:
         loge(("Unsupported interrupt 0x21 subfunction! subfunction: 0x%02x", (uint)regs->a.byte.h));
         while (1);

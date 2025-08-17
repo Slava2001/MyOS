@@ -6,7 +6,7 @@
 
 extern Fat16Ctx FAT;
 
-#define MAX_PROC_COUNT 1
+#define MAX_PROC_COUNT 2
 ProcSlot procs[MAX_PROC_COUNT];
 
 void proc_jmp(Regs *regs);
@@ -15,6 +15,9 @@ int prox_init() {
     procs[0].free = true;
     procs[0].segment = 0x07E0;
     procs[0].len = 0xFFFF;
+    procs[1].free = true;
+    procs[1].segment = 0x17E0;
+    procs[1].len = 0xFFFF;
     return 0;
 }
 
@@ -24,6 +27,7 @@ int proc_exec(path, params, regs) char *path; ExecParam *params; Regs *regs; {
     Fat16FileDesc file;
     ProcSlot *slot;
     Regs state;
+    ulong load_addr;
 
     logi(("Loading Path: %.128s", path));
 
@@ -37,6 +41,7 @@ int proc_exec(path, params, regs) char *path; ExecParam *params; Regs *regs; {
     for (rc = 0; rc < MAX_PROC_COUNT; rc++) {
         if (procs[rc].free) {
             slot = &procs[rc];
+            break;
         }
     }
     reci(!slot, ("Failed to find empty slot"));
@@ -52,12 +57,12 @@ int proc_exec(path, params, regs) char *path; ExecParam *params; Regs *regs; {
     state.ret_segment = slot->segment;
     state.ret_offset = 0x100; // for *.COM files
 
-    rc = fat16_load(&FAT, &file, (ulong)state.ret_segment * 16 + state.ret_offset,
-                    (ulong)slot->len);
+    load_addr = ((ulong)state.ret_segment) * 16 + state.ret_offset;
+    rc = fat16_load(&FAT, &file, load_addr, (ulong)slot->len);
     reci(rc, ("Failed to load program: %s", path));
 
-    logi(("Program %s loaded", path));
-
+    logi(("Program %s loaded on 0x%08lx(0x%04x:0x%04x)",
+          path, load_addr, state.ret_segment, state.ret_offset));
     proc_jmp(&state);
 
     return -1; // unrectheble

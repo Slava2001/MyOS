@@ -12,10 +12,12 @@ typedef struct DiskCtx {
 
 /**
  * Set local addres flag (most signed bit)
- * If flag is set addres is relativeto current segment, else addres is absolute
+ * If flag is set addres is relative to current segment, else addres is absolute
+ * @param addr linear addres 0x00000-0xFFFFF
  */
 #define Local(addr) ((ulong)(0x80000000 + (ulong)((uint)(addr))))
 
+/// RAM linear addres 0x00000-0xFFFFF
 typedef ulong RamAddr;
 
 /**

@@ -1,5 +1,5 @@
 #include "disk.h"
-#include "stdio.h"
+#include "utils.h"
 
 typedef struct CHS {
     int cylinder;
@@ -31,11 +31,16 @@ DiskCtx *ctx; ulong src_sector; RamAddr dst; uint sector_count; {
     CHS chs;
     uint segment, offset;
     calc_chs(ctx, src_sector, &chs);
-    segment = dst >> 16;
-    if (segment & 0x8000) {
+    if ((uint)(dst >> 16) & 0x8000) {
         segment = get_current_code_segment();
+        offset = (uint)dst;
+    } else {
+        segment = (uint)(dst / 16);
+        offset = (uint)dst & 0xFF;
     }
-    offset = (uint)dst;
+    logd(("Loading Disk: 0x%02x, C: 0x%02x H: 0x%02x S: 0x%02x",
+          (uint)ctx->disk_num, (uint)chs.cylinder, (uint)chs.head, (uint)chs.sector));
+    logd(("count: %d, seg: 0x%04x, offset: 0x%04x", sector_count, segment, offset));
     return load_sectors_from_disk(
         ctx->disk_num, chs.cylinder,
         chs.head, chs.sector, sector_count, segment, offset

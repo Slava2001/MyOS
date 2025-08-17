@@ -13,7 +13,11 @@ extern char *APP_NAME;
 
 #define logi(msg) log(Info, msg)
 #define loge(msg) log(Err,  msg)
+#ifdef DEBUG
 #define logd(msg) log(Dbg,  msg)
+#else
+#define logd(msg)
+#endif
 
 #define rci(cond, code, msg) if (cond) { loge(msg); return code; }
 #define reci(cond, msg) rci(cond, -1, msg)
