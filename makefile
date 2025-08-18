@@ -5,11 +5,12 @@ IMG_NAME = os.img
 IMG_SIZE_MB = 16 # Range: 16Mb - 2G
 SECOND_BOOTLOADER_SIZE_SECTORS = 20
 CC = bcc
-CFLAGS = -ansi -0 -f -W
+CFLAGS = -ansi -0 -f -W -mt
 AS = nasm
 ASFLAGS = -w+error
 LD = ld86
 LDFLAGS = -d
+
 help:
 	@echo "Available commands:"
 	@echo "  make clean   - remove compile artifacts"
@@ -36,12 +37,12 @@ MBR_SRC = ./src/main_boot_record.asm
 mbr.bin: $(MBR_SRC)
 	@echo "[build] Compile $(@F)"
 	@mkdir -p $(BUILDDIR)/$(@D)
-	    @$(AS) $(INCLUDE_FLAGS) $(ASFLAGS) -f bin $< -o $(BUILDDIR)/$@
+	@$(AS) $(INCLUDE_FLAGS) $(ASFLAGS) -f bin $< -o $(BUILDDIR)/$@
 
 BOOTLOADER_SRC = $(wildcard src/bootloader/*)
 bootloader.bin: $(SRT0_OBJ) $(BOOTLOADER_SRC:=.o) $(LIB_OBJ)
 	@echo "[build] Compile $(@F)"
-	    @$(LD) $(LDFLAGS) $(addprefix $(BUILDDIR)/,$+) -o $(BUILDDIR)/$@
+	@$(LD) $(LDFLAGS) $(addprefix $(BUILDDIR)/,$+) -o $(BUILDDIR)/$@
 	@if [ "$$(stat -c %s $(BUILDDIR)/$@)" -gt "$$((512 * $(SECOND_BOOTLOADER_SIZE_SECTORS)))" ]; then \
          exit 1; \
      fi
@@ -49,19 +50,34 @@ bootloader.bin: $(SRT0_OBJ) $(BOOTLOADER_SRC:=.o) $(LIB_OBJ)
 KERNEL_SRC = $(wildcard src/kernel/*)
 kernel.bin: $(SRT0_OBJ) $(KERNEL_SRC:=.o) $(LIB_OBJ)
 	@echo "[build] Compile $(@F)"
-	    @$(LD) $(LDFLAGS) $(addprefix $(BUILDDIR)/,$+) -o $(BUILDDIR)/$@
+	@$(LD) $(LDFLAGS) $(addprefix $(BUILDDIR)/,$+) -o $(BUILDDIR)/$@
+
+APPS_SRT0_SRC = src/apps/crt0.asm
+APPS_SRT0_OBJ = $(APPS_SRT0_SRC:=.o)
+
+APPS_LDFLAGS = $(LDFLAGS) -T0x100
+
+apps: CLI.COM
+
+CLI_SRC = src/apps/cli.c
+CLI_OBJ = $(CLI_SRC:=.o)
+
+.SECONDEXPANSION:
+%.COM: $(APPS_SRT0_OBJ) $$($$*_OBJ) $(LIB_OBJ)
+	@echo "[build] Compile app $(@F) $* $($*_OBJ)"
+	$(LD) $(APPS_LDFLAGS) $(addprefix $(BUILDDIR)/,$+) -o $(BUILDDIR)/$@
 
 %.c.o :: %.c
 	@echo "[build] Compile $(@F)"
 	@mkdir -p $(BUILDDIR)/$(@D)
-	    @$(CC) -c $(INCLUDE_FLAGS) $(CFLAGS) $< -o $(BUILDDIR)/$@
+	@$(CC) -c $(INCLUDE_FLAGS) $(CFLAGS) $< -o $(BUILDDIR)/$@
 
 %.asm.o :: %.asm
 	@echo "[build] Compile $(@F)"
 	@mkdir -p $(BUILDDIR)/$(@D)
-	    @$(AS) $(INCLUDE_FLAGS) $(ASFLAGS) -f as86 $< -o $(BUILDDIR)/$@
+	@$(AS) $(INCLUDE_FLAGS) $(ASFLAGS) -f as86 $< -o $(BUILDDIR)/$@
 
-img: build
+img: build apps
 	@rm -f $(IMG_NAME)
 	@echo "[img] Remove old image: OK"
 	@dd if=/dev/zero of=$(IMG_NAME) bs=1MiB count=$(IMG_SIZE_MB) > /dev/null 2>&1
@@ -79,6 +95,7 @@ img: build
      sudo cp -r ./src $$temp_dir;                           \
      sudo cp -r ./include $$temp_dir;                       \
      sudo cp $(BUILDDIR)/kernel.bin $$temp_dir;             \
+     sudo cp $(BUILDDIR)/*.COM $$temp_dir;                  \
      sudo cp ./3rdparty/HRY/LINES/LINES.COM $$temp_dir;     \
      sudo cp ./3rdparty/UTILITY/ASCII/ASCII.COM $$temp_dir; \
      sudo umount $(IMG_NAME);
