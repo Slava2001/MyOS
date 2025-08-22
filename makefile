@@ -5,7 +5,7 @@ IMG_NAME = os.img
 IMG_SIZE_MB = 16 # Range: 16Mb - 2G
 SECOND_BOOTLOADER_SIZE_SECTORS = 20
 CC = bcc
-CFLAGS = -ansi -0 -f -W -mt
+CFLAGS = -ansi -0 -f -W
 AS = nasm
 ASFLAGS = -w+error
 LD = ld86
@@ -21,7 +21,7 @@ help:
 clean:
 	@rm -rf $(BUILDDIR)
 
-build: mbr.bin bootloader.bin kernel.bin
+build: mbr.bin bootloader.bin kernel.bin apps
 	@echo "[build] Compiling the project: OK"
 
 INCLUDE_DIRS = include
@@ -57,27 +57,30 @@ APPS_SRT0_OBJ = $(APPS_SRT0_SRC:=.o)
 
 APPS_LDFLAGS = $(LDFLAGS) -T0x100
 
-apps: CLI.COM
+apps: CLI.COM KEYCODE.COM
 
 CLI_SRC = src/apps/cli.c
 CLI_OBJ = $(CLI_SRC:=.o)
 
+KEYCODE_SRC = src/apps/keycode.c
+KEYCODE_OBJ = $(KEYCODE_SRC:=.o)
+
 .SECONDEXPANSION:
 %.COM: $(APPS_SRT0_OBJ) $$($$*_OBJ) $(LIB_OBJ)
 	@echo "[build] Compile app $(@F) $* $($*_OBJ)"
-	$(LD) $(APPS_LDFLAGS) $(addprefix $(BUILDDIR)/,$+) -o $(BUILDDIR)/$@
+	@$(LD) $(APPS_LDFLAGS) $(addprefix $(BUILDDIR)/,$+) -o $(BUILDDIR)/$@
 
 %.c.o :: %.c
-	@echo "[build] Compile $(@F)"
+	@echo "[build] Compile $<"
 	@mkdir -p $(BUILDDIR)/$(@D)
 	@$(CC) -c $(INCLUDE_FLAGS) $(CFLAGS) $< -o $(BUILDDIR)/$@
 
 %.asm.o :: %.asm
-	@echo "[build] Compile $(@F)"
+	@echo "[build] Compile $<"
 	@mkdir -p $(BUILDDIR)/$(@D)
 	@$(AS) $(INCLUDE_FLAGS) $(ASFLAGS) -f as86 $< -o $(BUILDDIR)/$@
 
-img: build apps
+img: build
 	@rm -f $(IMG_NAME)
 	@echo "[img] Remove old image: OK"
 	@dd if=/dev/zero of=$(IMG_NAME) bs=1MiB count=$(IMG_SIZE_MB) > /dev/null 2>&1

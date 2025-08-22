@@ -8,6 +8,14 @@ void puts(str) char *str; {
     }
 }
 
+char getc() {
+    uint key;
+    do {
+        key = get_key();
+    } while(key & 0xFF);
+    return (char)key;
+}
+
 typedef struct FmtDesc {
     char flag;
     int width;

@@ -1,0 +1,15 @@
+#include "stdio.h"
+#include "types.h"
+
+#define ESC_KEY 0x011B
+
+int entry() {
+    uint c;
+    printf("Keycode scanner. Press ESC to exit\n\r");
+    do {
+        c = get_key();
+        printf("Key: %c (%d), scancode: %d\n\r",
+               c & 0xFF, c & 0xFF, (c >> 8) & 0xFF);
+    } while(c != ESC_KEY);
+    return 0;
+}

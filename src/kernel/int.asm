@@ -67,6 +67,7 @@ ret_segment: dw 0x0000
 ret_offset:  dw 0x0000
 
 _int_handler_proxy:
+    cli
     mov [CS:reg_ax], AX
     mov [CS:reg_bx], BX
     mov [CS:reg_cx], CX
@@ -110,4 +111,5 @@ _int_handler_proxy:
     mov DS, [CS:reg_ds]
     mov SS, [CS:reg_ss]
     mov ES, [CS:reg_es]
+    sti
 iret

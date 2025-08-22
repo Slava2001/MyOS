@@ -79,6 +79,10 @@ ProcSlot* proc_fing_slot(code_segment) uint code_segment; {
 }
 
 void proc_exit(slot) ProcSlot* slot; {
-    slot->free = true;
+    slot->parent_state.a.x = 0;
+    // caller stack hold iret flag, segment and offset
+    // proc_jmp use provided flag, segment and offset to jmp
+    // so, we need to remove old values from caller stack (6 bytes)
+    slot->parent_state.sp += 6;
     proc_jmp(&slot->parent_state);
 }

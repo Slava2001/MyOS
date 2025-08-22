@@ -44,8 +44,8 @@ int bootloader_main() {
     logi(("Kernel loaded"));
 
     logi(("Call kernel init function"));
-    rc = fcall(KERNEL_SEGMENT, KERNEL_OFFSET);
-    reci(rc, ("Failed to init kernel"));
+    reci(fcall(KERNEL_SEGMENT, KERNEL_OFFSET),
+         ("Failed to init kernel"));
     logi(("Kernel initialized"));
     return 0;
 }
