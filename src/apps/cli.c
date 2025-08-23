@@ -26,7 +26,7 @@ char *logo = "\n\r"
 "  //                                    \\\\\n\r"
 "\\____/                                \\____/\n\r";
 
-#define BUFF_SIZE 32
+#define BUFF_SIZE 15
 int entry() {
     ExecParam exec_param;
     char input_buff[BUFF_SIZE];
