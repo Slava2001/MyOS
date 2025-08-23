@@ -16,6 +16,18 @@ void putc(char c);
 char getc();
 
 /**
+ * Get null-terminated string
+ * @param[out] buff to save stirng
+ * @param buff_size buff size
+ * @return sting len
+ */
+char gets(char *buff, uint buff_size);
+
+#define KEY_ENTER     0x1C0D
+#define KEY_BACKSPACE 0x0E08
+#define KEY_ESC       0x011B
+
+/**
  * Get keyboard key
  * @return ASCII char in low byte, scancode in highth
  */

@@ -9,11 +9,38 @@ void puts(str) char *str; {
 }
 
 char getc() {
-    uint key;
+    char ch;
+    do {
+        ch = get_key();
+        if (isprint(ch)) {
+            return ch;
+        }
+    } while(1);
+}
+
+char gets(buff, buff_size) char *buff; uint buff_size; {
+    uint len;
+    int key;
+    len = 0;
+    buff_size--; // save space for terminated null
     do {
         key = get_key();
-    } while(key & 0xFF);
-    return (char)key;
+        if (key == KEY_ENTER) {
+            puts("\n\r");
+            break;
+        } else if (key == KEY_BACKSPACE) {
+            if (len > 0) {
+                len--;
+                puts("\b \b");
+            }
+        } else if ((key & 0xff) && isprint(key & 0xff)) {
+            buff[len] = key & 0xff;
+            putc(buff[len]);
+            len++;
+        }
+    } while (len < buff_size);
+    buff[len] = 0;
+    return len;
 }
 
 typedef struct FmtDesc {

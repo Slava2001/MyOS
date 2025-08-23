@@ -82,4 +82,17 @@ void memcpy_from_far(void *dst, uint src_segment, uint src_offset, uint len);
  */
 void strcpy_from_far(char *dst, uint src_segment, uint src_offset);
 
+/**
+ * Check if char is printable
+ * @param ch char to check
+ * @return true if char is printable
+ */
+int isprint(char ch);
+
+/**
+ * Convert ASCII letters to uppercase
+ * @param[inout] buff buffer with null-terminated string
+ */
+void uppercase(char *buff);
+
 #endif // STRING_H

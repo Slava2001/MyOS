@@ -11,7 +11,7 @@ extern char *APP_NAME;
 #define Disable 4
 
 #ifndef log_lvl
-#define log_lvl Dbg
+#define log_lvl Info
 #endif
 
 #if log_lvl == Dbg

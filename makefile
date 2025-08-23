@@ -101,6 +101,7 @@ img: build
      sudo cp $(BUILDDIR)/*.COM $$temp_dir;                  \
      sudo cp ./3rdparty/HRY/LINES/LINES.COM $$temp_dir;     \
      sudo cp ./3rdparty/UTILITY/ASCII/ASCII.COM $$temp_dir; \
+     sudo cp ./3rdparty/HRY/MANDELB/MANDELB.COM $$temp_dir; \
      sudo umount $(IMG_NAME);
 	@echo "[img] Writing files: OK"
 	@echo "[img] Creating disk image: OK"

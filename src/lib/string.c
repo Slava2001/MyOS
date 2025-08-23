@@ -76,3 +76,16 @@ int strcmp(a, b) char *a, *b; {
     }
     return (int)(*b - *a);
 }
+
+int isprint(ch) char ch; {
+    return 0x20 <= ch && ch <= 0x7E;
+}
+
+void uppercase(buff) char *buff; {
+    while (*buff) {
+        if (*buff >= 'a' && *buff <= 'z') {
+            *buff += 'A' - 'a';
+        }
+        buff++;
+    }
+}

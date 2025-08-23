@@ -7,6 +7,7 @@
 #include "int.h"
 
 void int_x21_handler(Regs *regs);
+void int_x20_handler(Regs *regs); // exec proc
 void int_x21_x4b_handler(Regs *regs); // exec proc
 void int_x21_x09_handler(Regs *regs); // exit from proc
 
@@ -14,6 +15,9 @@ void int_common_handler(int_num, regs) uint int_num; Regs *regs; {
     switch (int_num) {
     case 0x21:
         int_x21_handler(regs);
+        break;
+    case 0x20:
+        int_x20_handler(regs);
         break;
     default:
         loge(("Unsupported interrupt! int: 0x%02x", int_num));
@@ -47,6 +51,10 @@ void int_x21_x4b_handler(regs) Regs *regs; {
     memcpy_from_far(&params.fcb1,          regs->es, regs->b.x + 6,  4);
     memcpy_from_far(&params.fcb2,          regs->es, regs->b.x + 10, 4);
     proc_exec(name, &params, regs);
+}
+
+void int_x20_handler(regs) Regs *regs; {
+    int_x21_x09_handler(regs);
 }
 
 void int_x21_x09_handler(regs) Regs *regs; {
