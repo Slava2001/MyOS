@@ -6,18 +6,18 @@
 
 extern Fat16Ctx FAT;
 
-#define MAX_PROC_COUNT 2
+#define MAX_PROC_COUNT 5
 ProcSlot procs[MAX_PROC_COUNT];
 
 void proc_jmp(Regs *regs);
 
 int prox_init() {
-    procs[0].free = true;
-    procs[0].segment = 0x07E0;
-    procs[0].len = 0xFFFF;
-    procs[1].free = true;
-    procs[1].segment = 0x17E0;
-    procs[1].len = 0xFFFF;
+    int i;
+    for (i = 0; i < MAX_PROC_COUNT; i++) {
+        procs[i].free = true;
+        procs[i].segment = i * 0x1000 + 0x07E0;
+        procs[i].len = 0xFFFF;
+    }
     return 0;
 }
 
@@ -29,10 +29,12 @@ int proc_exec(path, params, regs) char *path; ExecParam *params; Regs *regs; {
     Regs state;
     ulong load_addr;
 
-    logi(("Loading Path: %.128s", path));
+    logi(("Loading file: %.128s", path));
 
     rc = fat16_get_root(&FAT, &root);
     reci(rc, ("Failed to get root dir"));
+    rc = fat16_find(&FAT, &root, "PATH", &root);
+    reci(rc, ("Failed to PATH dir"));
 
     rc = fat16_find(&FAT, &root, path, &file);
     reci(rc, ("Failed to find program: %s", path));

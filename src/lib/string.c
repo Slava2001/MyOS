@@ -89,3 +89,35 @@ void uppercase(buff) char *buff; {
         buff++;
     }
 }
+
+int ishex(ch) char ch; {
+    return (ch >= '0' && ch <= '9' ||
+            ch >= 'a' && ch <= 'f' ||
+            ch >= 'A' && ch <= 'F');
+}
+
+int ctoh(ch) char ch; {
+    if (ch >= '0' && ch <= '9') {
+        return ch - '0';
+    }
+    if (ch >= 'a' && ch <= 'f') {
+        return ch - 'a' + 10;
+    }
+    if (ch >= 'A' && ch <= 'F') {
+        return ch - 'A' + 10;
+    }
+    return 0;
+}
+
+ulong ahtoul(str) char *str; {
+    ulong val;
+    val = 0;
+    while (*str) {
+        if (!ishex(*str)) {
+            return 0;
+        }
+        val = val * 16 + ctoh(*str);
+        str++;
+    }
+    return val;
+}

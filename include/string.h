@@ -28,6 +28,20 @@ char* ltoa(long val, char *buff, int len, int base);
 char* ultoa(ulong val, char *buff, int len, int base);
 
 /**
+ * Convert null-terminated string with hex value to ulong
+ * @param[in] str string with hex value
+ * @return 0 on error, value on Ok.
+ */
+ulong ahtoul(char *str);
+
+/**
+ * Check if provided char is hex digit
+ * @param ch char to check
+ * @return 0 if provided char is not a hex digit
+ */
+int ishex(char ch);
+
+/**
  * Check if provided char id digit '0'-'9'
  * @param ch char  to check
  * @return true if ch is digit, else false

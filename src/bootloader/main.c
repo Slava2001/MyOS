@@ -19,7 +19,6 @@ char *APP_NAME = "[ BOOT ]";
 int bootloader_main() {
     int rc, skip, i;
     DiskCtx disk;
-    char fat_buf[512];
     Fat16Ctx fat;
     Fat16FileDesc root_dir;
     Fat16FileDesc kernel;
@@ -31,11 +30,14 @@ int bootloader_main() {
            "heads: %d\n\r    sectors: %d",
            disk.disk_num, disk.cylinders, disk.heads, disk.sectors));
 
-    rc = fat16_init((void *)fat_buf, (int)sizeof(fat_buf), &disk, &fat);
+    rc = fat16_init(&disk, &fat);
     reci(rc, ("Failed to init fat16 context"));
     logi(("Init Fat 16: Ok, volume label: %s", fat.header.volume_label));
 
-    rc = fat16_find(&fat, NULL, "/KERNEL.BIN", &kernel);
+    rc = fat16_get_root(&fat, &root_dir);
+    reci(rc, ("Failed to get root dir"));
+
+    rc = fat16_find(&fat, &root_dir, "KERNEL.BIN", &kernel);
     reci(rc, ("Failed to find kernel file"));
     logi(("Kernel found. size: %lu bytes", kernel.file_size_bytes));
 

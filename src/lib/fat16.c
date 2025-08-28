@@ -1,6 +1,7 @@
 #include "fat16.h"
 #include "string.h"
 #include "utils.h"
+// #define log_lvl Dbg
 
 #define FAT16_SIGNATURE 0x29
 #define FILE_DESC_SIZE_BYTE 32
@@ -72,19 +73,16 @@ void _parse_fat_header(buff, hdr) void *buff; Fat16Header *hdr; {
     hdr->file_system_type[8] = 0;
 }
 
-int fat16_init(buff, len, disk, ctx)
-void *buff; int len; DiskCtx *disk; Fat16Ctx *ctx; {
+int fat16_init(disk, ctx) DiskCtx *disk; Fat16Ctx *ctx; {
     int rc;
     Fat16FileDesc fd;
-
-    reci(len != SECTOR_SIZE_BYTE, ("Wrong buff len, expected %u", (uint)SECTOR_SIZE_BYTE));
-    ctx->buff_addr = buff;
+    byte buff[512];
     ctx->disk = disk;
 
-    rc = disk_load(ctx->disk, (ulong)0, Local(ctx->buff_addr), (uint)1);
+    rc = disk_load(ctx->disk, (ulong)0, Local(buff), (uint)1);
     reci(rc, ("Failed to load Fat header: %d", rc));
 
-    parse_fat_header((void *)ctx->buff_addr, &ctx->header);
+    parse_fat_header((void *)buff, &ctx->header);
     reci(ctx->header.signature != FAT16_SIGNATURE,
          ("Invalid fat signature: 0x%02x", (uint)ctx->header.signature));
 
@@ -146,15 +144,16 @@ Fat16Ctx *ctx; Fat16FileDesc *dir; ulong sector; RamAddr dst; {
     int rc;
     rc = disk_load(ctx->disk, ctx->root_dir_sector + sector, dst, (uint)1);
     reci(rc, ("Failed to load root dir sector: %d", rc));
-    return;
+    return 0;
 }
 
 int _load_next_sector_dir(ctx, dir, sector, dst)
 Fat16Ctx *ctx; Fat16FileDesc *dir; ulong sector; RamAddr dst; {
     int rc;
     rc = fat16_load_one(ctx, dir, sector, dst);
-    reci(rc, ("Failed to load dir file %s sector: %d", dir->name, rc));
-    return;
+    logd(("load dir file %s sector %lu: rc: %d", dir->name, sector, rc));
+    reci(rc, ("Failed to load dir file %s sector: rc: %d", dir->name, rc));
+    return 0;
 }
 
 int _list_dir(ctx, dir, next_sec_f, desc_count, skip, files, max_files_count)
@@ -164,18 +163,20 @@ Fat16FileDesc *files; int max_files_count; {
     ulong sector;
     int rc, saved_files;
     Fat16FileDesc tmp;
+    byte buff[512];
 
     sector = skip / FILE_DESC_PER_SECTOR;
     i = skip % FILE_DESC_PER_SECTOR;
     saved_files = 0;
+    logd(("Sector: %lu, skip: %d", sector, i));
     for (read_files = skip; read_files < desc_count && saved_files < max_files_count;) {
-        rc = next_sec_f(ctx, dir, sector, Local(ctx->buff_addr));
+        rc = next_sec_f(ctx, dir, sector, Local(buff));
         reci(rc, ("Failed to load next sector"));
         for (;
              i < FILE_DESC_PER_SECTOR && read_files < desc_count && saved_files < max_files_count;
              i++, read_files++)
         {
-            parse_file_desc((void *)(ctx->buff_addr + i * FILE_DESC_SIZE_BYTE), &tmp);
+            parse_file_desc((void *)(buff + i * FILE_DESC_SIZE_BYTE), &tmp);
             if (tmp.name[0] != 0 && tmp.name[0] != DELETED_FILE_NAME_FIRST_CHAR) {
                 files[saved_files] = tmp;
                 saved_files++;
@@ -191,11 +192,12 @@ int _get_next_cluster(ctx, current, next)
 Fat16Ctx *ctx; uint current, *next; {
     int rc;
     ulong sector, offset;
+    byte buff[512];
     sector = ctx->header.system_area_size_sectors + current / ((512 / 2)/*fat entry per sector*/);
     offset = (current % ((512 / 2)/*fat entry per sector*/)) * 2;
-    rc = disk_load(ctx->disk, sector, Local(ctx->buff_addr), (uint)1);
+    rc = disk_load(ctx->disk, sector, Local(buff), (uint)1);
     reci(rc, ("Failed to load sector with part of fat: %d", rc));
-    *next = *((uint *)(ctx->buff_addr + offset));
+    *next = *((uint *)(buff + offset));
     return 0;
 }
 
@@ -215,6 +217,7 @@ Fat16Ctx *ctx; Fat16FileDesc *file; ulong src_sector; RamAddr dst; {
         rc = get_next_cluster(ctx, cluster, &cluster);
         reci((cluster < 0x0003 || cluster > 0xFFEF), ("Unexpected cluster desc: 0x%04x", cluster));
     }
+    logd(("Loading sector %lu from cluster %x of file %s", src_sector, cluster, file->name));
 
     cluster_sector = (ulong)(cluster - 2) * ctx->header.sectors_per_cluster +
                      ctx->root_dir_sector +
@@ -223,7 +226,8 @@ Fat16Ctx *ctx; Fat16FileDesc *file; ulong src_sector; RamAddr dst; {
     offset_in_cluster = src_sector % ctx->header.sectors_per_cluster;
     src_sector = cluster_sector + offset_in_cluster;
 
-    logd(("Loading sector of file %s in 0x%08lx", file->name, dst));
+    logd(("Loading sector (on disk: %lx) of file %s", src_sector, file->name));
+    logd(("Loading from addr: 0x%08lx", src_sector * 0x200));
     rc = disk_load(ctx->disk, (ulong)src_sector, dst, (uint)1);
     reci(rc, ("Failed to load file content"));
     return 0;
@@ -237,7 +241,6 @@ Fat16Ctx *ctx; Fat16FileDesc *file; RamAddr dst; ulong dst_size_sectors; {
     reci(dst_size_sectors < file_size_sectors, ("Failed to load file content: provided buffer too "
          "small: required %lu, provided: %lu", file_size_sectors, dst_size_sectors));
     for (i = 0; i < file_size_sectors; i += 1) {
-        logd(("%.8s.%.3s files sector: %lu", file->name, file->ext, i));
         rc = fat16_load_one(ctx, file, i, dst);
         reci(rc, ("Failed to load %.8s.%.3s files sector: %lu", file->name, file->ext, i));
         dst += SECTOR_SIZE_BYTE;
@@ -247,44 +250,31 @@ Fat16Ctx *ctx; Fat16FileDesc *file; RamAddr dst; ulong dst_size_sectors; {
 
 #define FILES_BUFF_SIZE 64
 
-int fat16_find(ctx, dir, path, file)
-Fat16Ctx *ctx; Fat16FileDesc *dir; char *path; Fat16FileDesc *file; {
-    char name[9];
-    char *ext;
+int fat16_find(ctx, dir, name, file)
+Fat16Ctx *ctx; Fat16FileDesc *dir; char *name; Fat16FileDesc *file; {
+    char file_name[8/*name*/ + 1/*.*/ + 3/*ext*/ + 1/*null*/];
     int name_len, skip, rc, i;
     Fat16FileDesc files[FILES_BUFF_SIZE];
-    Fat16FileDesc *found_file;
 
-    reci(*path != '/', ("Currently only absolute path supported"));
-    ext = path + 1;
-    name_len = 0;
-    while (*ext != '.') {
-        name[name_len] = *ext;
-        name_len++;
-        ext++;
-    }
-    ext++;
-    name[name_len] = 0;
+    reci(strlen(name) > 12, ("Unsupported file name: %s", name));
 
     skip = 0;
-    found_file = NULL;
-    while (1) {
+    do {
         rc = fat16_list(ctx, dir, skip, files, FILES_BUFF_SIZE);
-        skip += FILES_BUFF_SIZE;
-        reci(rc < 0, ("Failed to list files in root dir"));
+        skip += rc;
         for (i = 0; i < rc; i++) {
-            if (!strcmp(files[i].name, name) && !strcmp(files[i].ext, ext)) {
-                found_file = &files[i];
-                break;
+            name_len = strlen(files[i].name);
+            memcpy(file_name, files[i].name, name_len + 1);
+            if (strlen(files[i].ext)) {
+                file_name[name_len] = '.';
+                memcpy(file_name + name_len + 1, files[i].ext, strlen(files[i].ext) + 1);
+            }
+            if (!strcmp(file_name, name)) {
+                *file = files[i];
+                return 0;
             }
         }
-        if (rc < FILES_BUFF_SIZE) {
-            break;
-        }
-    }
-    if (found_file) {
-        *file = *found_file;
-        return 0;
-    }
+    } while (rc == FILES_BUFF_SIZE);
+    reci(rc < 0, ("Failed to list files in %s", dir->name));
     return 1;
 }

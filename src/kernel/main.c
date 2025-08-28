@@ -11,13 +11,14 @@
 
 char *APP_NAME = "[KERNEL]";
 
-char fat_buf[512];
 #define BOOTLOADER_DISK 0x80
 DiskCtx DISK;
 Fat16Ctx FAT;
 
 int init_kernel() {
     int rc;
+    Fat16FileDesc file;
+
     logi(("Initializing IVT"));
     int_init_ivt();
     rc = disk_init(&DISK, BOOTLOADER_DISK);
@@ -26,13 +27,22 @@ int init_kernel() {
            "heads: %d\n\r    sectors: %d",
            DISK.disk_num, DISK.cylinders, DISK.heads, DISK.sectors));
 
-    rc = fat16_init((void *)fat_buf, (int)sizeof(fat_buf), &DISK, &FAT);
+    rc = fat16_init(&DISK, &FAT);
     reci(rc, ("Failed to init fat16 context"));
     logi(("Init Fat 16: Ok, volume label: %s", FAT.header.volume_label));
 
     rc = prox_init();
     reci(rc, ("Failed to init proc manager"));
     logi(("Proc manager loaded"));
+
+    rc = fat16_get_root(&FAT, &file);
+    reci(rc, ("Failed to get root dir"));
+    rc = fat16_find(&FAT, &file, "PATH", &file);
+    reci(rc, ("Failed to PATH dir"));
+    rc = fat16_list(&FAT, &file, 0, NULL, 0);
+    reci(rc, ("Failed to list"));
+    rc = fat16_load(&FAT, &file, (ulong)0x30000, (ulong)0xff);
+    reci(rc, ("Failed to load dir"));
 
     logi(("Kernel initialized"));
     return 0;

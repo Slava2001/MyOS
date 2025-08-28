@@ -34,11 +34,15 @@ char gets(buff, buff_size) char *buff; uint buff_size; {
                 puts("\b \b");
             }
         } else if ((key & 0xff) && isprint(key & 0xff)) {
+            if (len >= buff_size) {
+                puts("\n\r");
+                break;
+            }
             buff[len] = key & 0xff;
             putc(buff[len]);
             len++;
         }
-    } while (len < buff_size);
+    } while (1);
     buff[len] = 0;
     return len;
 }

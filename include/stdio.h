@@ -23,9 +23,12 @@ char getc();
  */
 char gets(char *buff, uint buff_size);
 
-#define KEY_ENTER     0x1C0D
-#define KEY_BACKSPACE 0x0E08
-#define KEY_ESC       0x011B
+#define KEY_ENTER      0x1C0D
+#define KEY_BACKSPACE  0x0E08
+#define KEY_ESC        0x011B
+#define KEY_ARROW_UP   0x4800
+#define KEY_ARROW_DOWN 0x5000
+#define KEY_G          0x2267
 
 /**
  * Get keyboard key

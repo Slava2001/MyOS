@@ -5,7 +5,7 @@ IMG_NAME = os.img
 IMG_SIZE_MB = 16 # Range: 16Mb - 2G
 SECOND_BOOTLOADER_SIZE_SECTORS = 20
 CC = bcc
-CFLAGS = -ansi -0 -f -W
+CFLAGS = -ansi -0 -f -W -O
 AS = nasm
 ASFLAGS = -w+error
 LD = ld86
@@ -57,7 +57,7 @@ APPS_SRT0_OBJ = $(APPS_SRT0_SRC:=.o)
 
 APPS_LDFLAGS = $(LDFLAGS) -T0x100
 
-apps: CLI.COM KEYCODE.COM
+apps: CLI.COM KEYCODE.COM MEM.COM
 
 CLI_SRC = src/apps/cli.c
 CLI_OBJ = $(CLI_SRC:=.o)
@@ -65,9 +65,12 @@ CLI_OBJ = $(CLI_SRC:=.o)
 KEYCODE_SRC = src/apps/keycode.c
 KEYCODE_OBJ = $(KEYCODE_SRC:=.o)
 
+MEM_SRC = src/apps/mem.c
+MEM_OBJ = $(MEM_SRC:=.o)
+
 .SECONDEXPANSION:
 %.COM: $(APPS_SRT0_OBJ) $$($$*_OBJ) $(LIB_OBJ)
-	@echo "[build] Compile app $(@F) $* $($*_OBJ)"
+	@echo "[build] Compile app $(@F)"
 	@$(LD) $(APPS_LDFLAGS) $(addprefix $(BUILDDIR)/,$+) -o $(BUILDDIR)/$@
 
 %.c.o :: %.c
@@ -92,16 +95,38 @@ img: build
 	@echo "[img] Writing MBR: OK"
 	@dd if=$(BUILDDIR)/bootloader.bin of=$(IMG_NAME) bs=512 seek=1 conv=notrunc iflag=skip_bytes,count_bytes > /dev/null 2>&1
 	@echo "[img] Writing second bootloader: OK"
-	@set -e;                                                \
-     temp_dir=$$(mktemp -d);                                \
-     sudo mount -t msdos $(IMG_NAME) $$temp_dir -o loop;    \
-     sudo cp -r ./src $$temp_dir;                           \
-     sudo cp -r ./include $$temp_dir;                       \
-     sudo cp $(BUILDDIR)/kernel.bin $$temp_dir;             \
-     sudo cp $(BUILDDIR)/*.COM $$temp_dir;                  \
-     sudo cp ./3rdparty/HRY/LINES/LINES.COM $$temp_dir;     \
-     sudo cp ./3rdparty/UTILITY/ASCII/ASCII.COM $$temp_dir; \
-     sudo cp ./3rdparty/HRY/MANDELB/MANDELB.COM $$temp_dir; \
+	@set -e;                                                           \
+     temp_dir=$$(mktemp -d);                                           \
+     sudo mount -t msdos $(IMG_NAME) $$temp_dir -o loop;               \
+     sudo cp $(BUILDDIR)/kernel.bin $$temp_dir;                        \
+	 sudo mkdir -p $$temp_dir/PATH;                                    \
+     sudo cp $(BUILDDIR)/*.COM $$temp_dir/PATH;                        \
+     files="3rdparty/DOS-Progs/UTILITY/ASCII/ASCII.COM                 \
+	        3rdparty/DOS-Progs/HRY/MANDELB/MANDELB.COM                 \
+	        3rdparty/DOS-Progs/HRY/MANDELB/MANDEL0.COM                 \
+	        3rdparty/DOS-Progs/HRY/MANDELB/MANDEGA.COM                 \
+	        3rdparty/DOS-Progs/HRY/MANDELB/MANDEG0.COM                 \
+	        3rdparty/DOS-Progs/HRY/MANDELB/MANDCGA.COM                 \
+	        3rdparty/DOS-Progs/HRY/MANDELB/MANDCG2.COM                 \
+	        3rdparty/DOS-Progs/HRY/LINES/LINES.COM";                   \
+	 echo "[img] Copy files";                                          \
+     for f in $$files; do                                              \
+	     filename=$$(basename "$$f");                                  \
+	     new_filename=$$filename;                                      \
+		 basename=$${filename%.*};                                     \
+	     basename="$$(awk "BEGIN{print substr(\"$$basename\",0,6)}")"; \
+	     extension=".$${filename##*.}";                                \
+	     dest_path="$${temp_dir}/PATH/$${new_filename}";               \
+	     index=1;                                                      \
+		 echo -n "[img] Copy $$new_filename -> ";                      \
+	     while [ -f "$$dest_path" ]; do                                \
+			new_filename="$${basename}$${index}$${extension}";         \
+			dest_path="$${temp_dir}/PATH/$${new_filename}";            \
+			index=$$((index + 1));                                     \
+	     done;                                                         \
+		 echo "$$new_filename";                                        \
+	     sudo cp "$$f" "$$dest_path";                                  \
+	 done;                                                             \
      sudo umount $(IMG_NAME);
 	@echo "[img] Writing files: OK"
 	@echo "[img] Creating disk image: OK"

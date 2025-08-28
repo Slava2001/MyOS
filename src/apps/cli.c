@@ -26,7 +26,7 @@ char *logo = "\n\r"
 "  //                                    \\\\\n\r"
 "\\____/                                \\____/\n\r";
 
-#define BUFF_SIZE 15
+#define BUFF_SIZE 8 + 1 + 3 + 1
 int entry() {
     ExecParam exec_param;
     char input_buff[BUFF_SIZE];
@@ -38,16 +38,27 @@ int entry() {
     exec_param.cmd_args_tail = 0;
     exec_param.fcb1 = 0;
     exec_param.fcb2 = 0;
-    input_buff[0] = '/';
-    do {
-        printf("A:/>");
-        rc = gets(input_buff + 1, BUFF_SIZE - 1 - 5);
-        if (rc) {
-            memcpy(input_buff + 1 + rc, ".COM", 5);
-            uppercase(input_buff);
-            exec(input_buff, &exec_param);
+    while(1) {
+        puts("A:/>");
+        rc = gets(input_buff, BUFF_SIZE - 4);
+        if (!rc) {
+            continue;
         }
-    } while(strcmp(input_buff, "/EXIT.COM"));
-
+        uppercase(input_buff);
+        if (!strcmp(input_buff, "EXIT")) {
+            puts("Goodby!\n\r");
+            break;
+        }
+        if (!strcmp(input_buff, "HELP")) {
+            puts("HELP:\n\r"
+                 "Now this terminal allows you to run *.COM "
+                 "applications from the application directory. "
+                 "To do this, just enter the program name, for "
+                 "example \"keycode\" or \"mem\"\n\r");
+            continue;
+        }
+        memcpy(input_buff + rc, ".COM", 5);
+        exec(input_buff, &exec_param);
+    }
     return 0;
 }

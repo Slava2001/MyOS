@@ -54,7 +54,6 @@ typedef struct Fat16FileDesc {
 } Fat16FileDesc;
 
 typedef struct Fat16Ctx {
-    uint buff_addr;
     Fat16Header header;
     DiskCtx *disk;
     ulong root_dir_sector;
@@ -62,13 +61,11 @@ typedef struct Fat16Ctx {
 
 /**
  * Init Fat16 context
- * @param[in] buff buff for internal data (must be 512 byte)
- * @param len buff len (must be 512)
  * @param[in] disk disk context
  * @param[out] ctx fat 16 context
  * @return -1 on error, else 0
  */
-int fat16_init(void *buff, int len, DiskCtx *disk, Fat16Ctx *ctx);
+int fat16_init(DiskCtx *disk, Fat16Ctx *ctx);
 
 /**
  * Get root dir description
@@ -114,11 +111,11 @@ int fat16_load(Fat16Ctx *ctx, Fat16FileDesc *file, RamAddr dst, ulong dst_size_s
 /**
  * Find file by path
  * @param[in] ctx fat 16 context
- * @param[in] dir start dir, used for relative paths (provide NULL for absolute path)
- * @param[in] path path to file
+ * @param[in] dir dir for search
+ * @param[in] name file name
  * @param[out] file found file
  * @return -1 on error, 0 if file found, 1 if file not found
  */
-int fat16_find(Fat16Ctx *ctx, Fat16FileDesc *dir, char *path, Fat16FileDesc *file);
+int fat16_find(Fat16Ctx *ctx, Fat16FileDesc *dir, char *name, Fat16FileDesc *file);
 
 #endif // FAT16_H
